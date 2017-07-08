@@ -9905,6 +9905,7 @@ return jQuery;
 var SceneTemplate = (function () {
     // ******************************************************
     function SceneTemplate(renderer) {
+        this.uniforms = [];
         this.renderer = renderer;
         this.createScene();
         console.log("scene created!");
@@ -9944,32 +9945,32 @@ var SceneTemplate = (function () {
             objLoader.load('pal_transformed.obj', function (object) {
                 object.position.y = -1;
                 object.position.x = 0;
-                object.rotation.y = 0.08;
+                object.rotation.y = 0.08 + Math.PI;
                 console.log(object);
                 _this.scene.add(object);
                 var materials = object.children[0].material.materials;
                 for (var i = 0; i < materials.length; i++) {
                     var img = materials[i].map.image.src; //.attributes.currentSrc;
-                    var uniforms = {
+                    var _uniforms = {
                         time: { value: 1.0 },
                         texture: { value: new THREE.TextureLoader().load(img) }
                     };
+                    _this.uniforms.push(_uniforms);
                     // console.log(img);
                     // console.log(materials[i]);
                     materials[i].wireframe = true;
                     materials[i] = new THREE.ShaderMaterial({
-                        //color:0xffffff,map: new THREE.TextureLoader().load( img )
-                        uniforms: uniforms,
+                        uniforms: _uniforms,
                         vertexShader: document.getElementById("vertex_pal").textContent,
                         fragmentShader: document.getElementById("fragment_pal").textContent,
-                        wireframe: true
                     });
                 }
             }, onProgress, onError);
         });
         // カメラを作成
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
+        this.scene.scale.set(1.2, 1, 1);
         this.camera.position.z = 50;
     };
     // ******************************************************
@@ -9989,6 +9990,12 @@ var SceneTemplate = (function () {
     };
     // ******************************************************
     SceneTemplate.prototype.update = function (time) {
+        var timerStep = 0.01;
+        for (var i = 0; i < this.uniforms.length; i++) {
+            console.log(this.uniforms[i]);
+            this.uniforms[i].time.value += timerStep;
+        }
+        this.scene.position.z += 0.1;
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
     };
