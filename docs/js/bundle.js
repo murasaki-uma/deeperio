@@ -9944,18 +9944,33 @@ var SceneTemplate = (function () {
             objLoader.load('pal_transformed.obj', function (object) {
                 object.position.y = -1;
                 object.position.x = 0;
+                object.rotation.y = 0.08;
                 console.log(object);
                 _this.scene.add(object);
                 var materials = object.children[0].material.materials;
                 for (var i = 0; i < materials.length; i++) {
+                    var img = materials[i].map.image.src; //.attributes.currentSrc;
+                    var uniforms = {
+                        time: { value: 1.0 },
+                        texture: { value: new THREE.TextureLoader().load(img) }
+                    };
+                    // console.log(img);
+                    // console.log(materials[i]);
                     materials[i].wireframe = true;
+                    materials[i] = new THREE.ShaderMaterial({
+                        //color:0xffffff,map: new THREE.TextureLoader().load( img )
+                        uniforms: uniforms,
+                        vertexShader: document.getElementById("vertex_pal").textContent,
+                        fragmentShader: document.getElementById("fragment_pal").textContent,
+                        wireframe: true
+                    });
                 }
             }, onProgress, onError);
         });
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
-        this.camera.position.z = 100;
+        this.camera.position.z = 50;
     };
     // ******************************************************
     SceneTemplate.prototype.click = function () {

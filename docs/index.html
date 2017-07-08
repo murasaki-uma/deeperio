@@ -469,6 +469,27 @@
           }
       
     </script>
+    <script id="vertex_pal" type="x-shader/x-vertex">
+      varying vec2 vUv;
+      uniform float time;
+      void main()
+      {
+          vUv = uv;
+          vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+          gl_Position = projectionMatrix * mvPosition;
+      }
+      
+    </script>
+    <script id="fragment_pal" type="x-shader/x-fragment">
+      uniform sampler2D texture;
+      varying vec2 vUv;
+      void main( void ) {
+      
+          gl_FragColor = texture2D( texture, vUv );
+      }
+      
+      
+    </script>
     <script src="./js/three.min.js"></script>
     <script src="./js/GPUComputationRenderer.js"></script>
     <script src="./js/Detector.js"></script>
