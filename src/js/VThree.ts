@@ -2,7 +2,7 @@ declare function require(x: string): any;
 const Stats = require('stats-js');
 import * as $ from "jquery";
 import THREE = require("three");
-
+import "../../node_modules/three/examples/js/controls/OrbitControls.js";
 
 export default class VThree
 {
@@ -24,6 +24,7 @@ export default class VThree
     private stats:any;
 
     public debugMode:boolean = false;
+    public cameras:THREE.Camera[] = [];
 
     public isUpdate:boolean = true;
 
@@ -73,16 +74,19 @@ export default class VThree
         this.stats = new Stats();
         document.body.appendChild(this.stats.domElement);
 
+
         this.debug();
 
     }
 
     // 管理したいシーンを格納する関数
 
-    public addScene(scene:Object)
+    public addScene(scene:any)
     {
 
         this.scenes.push(scene);
+        this.cameras.push(scene.camera);
+        this.controls = new THREE.OrbitControls( scene.camera, this.renderer.domElement );
 
     }
 
