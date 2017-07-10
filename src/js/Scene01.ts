@@ -3,7 +3,7 @@ import "./loaders/DDSLoader.js";
 import "./loaders/OBJLoader.js";
 import GUI from "./GUI";
 // *********** ひとつめのシーン *********** //
-export default class SceneTemplate{
+export default class SceneTemplatetransparent{
 
     public scene: THREE.Scene;
     public camera: THREE.Camera;
@@ -13,6 +13,8 @@ export default class SceneTemplate{
     private cube:THREE.Mesh;
     private uniforms:any[] = [];
     private gui:GUI;
+
+    private pal_objects:any[] = [];
 
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
@@ -24,100 +26,102 @@ export default class SceneTemplate{
     }
 
     // ******************************************************
-    private createScene()
-    {
+    private createScene() {
 
         this.scene = new THREE.Scene();
 
         // 立方体のジオメトリーを作成
-        this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        this.geometry = new THREE.BoxGeometry(1, 1, 1);
         // 緑のマテリアルを作成
-        this.material = new THREE.MeshStandardMaterial( {
+        this.material = new THREE.MeshStandardMaterial({
             roughness: 0.7,
             color: 0xffffff,
             bumpScale: 0.002,
             metalness: 0.2
         });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        this.cube = new THREE.Mesh( this.geometry, this.material );
+        this.cube = new THREE.Mesh(this.geometry, this.material);
         // メッシュをシーンに追加
-        this.scene.add( this.cube );
+        this.scene.add(this.cube);
 
         let ambient = new THREE.AmbientLight(0xffffff);
         this.scene.add(ambient);
 
-        let dLight = new THREE.DirectionalLight(0xffffff,0.2);
-        dLight.position.set(0,1,0).normalize();
+        let dLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        dLight.position.set(0, 1, 0).normalize();
         this.scene.add(dLight);
 
-        var directionalLight = new THREE.DirectionalLight( 0xffeedd );
-        directionalLight.position.set( 0, 0, 1 ).normalize();
-        this.scene.add( directionalLight );
+        var directionalLight = new THREE.DirectionalLight(0xffeedd);
+        directionalLight.position.set(0, 0, 1).normalize();
+        this.scene.add(directionalLight);
 
 
-        var onProgress = function ( xhr ) {
-            if ( xhr.lengthComputable ) {
+        var onProgress = function (xhr) {
+            if (xhr.lengthComputable) {
                 var percentComplete = xhr.loaded / xhr.total * 100;
-                console.log( Math.round(percentComplete, 2) + '% downloaded' );
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
             }
         };
-        var onError = function ( xhr ) { };
-        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+        var onError = function (xhr) {
+        };
+        THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
         var mtlLoader = new THREE.MTLLoader();
-        mtlLoader.setPath( 'models/pal/' );
-        mtlLoader.load( 'pal_transformed.mtl', ( materials )=> {
+
+        // for(let i = 0; i < 2; i++)
+        // {}
+
+        mtlLoader.setPath('models/pal/');
+        mtlLoader.load('pal_transformed_decimated.mtl', (materials) => {
             materials.preload();
             var objLoader = new THREE.OBJLoader();
-            objLoader.setMaterials( materials );
-            objLoader.setPath( 'models/pal/' );
-            objLoader.load( 'pal_transformed.obj', ( object )=> {
-                object.position.y = -1;
-                object.position.x = 0;
-                object.rotation.y = 0.08+Math.PI;
+            objLoader.setMaterials(materials);
+            objLoader.setPath('models/pal/');
+            objLoader.load('pal_transformed_decimated.obj', (object) => {
+
                 console.log(object);
-                this.scene.add( object );
-                let materials = object.children[0].material.materials;
-                for(let i = 0; i < materials.length; i++)
-                {
+                this.scene.add(object);
 
-                    let img = materials[i].map.image.src;//.attributes.currentSrc;
-                    let _uniforms:any = {
-                        time:       { value: 1.0 },
-                        texture:    { value: new THREE.TextureLoader().load( img ) },
-                        threshold: {value: 0}
-                    };
-                    this.uniforms.push(_uniforms);
-                    // console.log(img);
-                    // console.log(materials[i]);
-
-                    materials[i].wireframe = true;
-
-                   materials[i] = new THREE.ShaderMaterial({
-                       uniforms:_uniforms,
-                       vertexShader: document.getElementById("vertex_pal").textContent,
-                       fragmentShader: document.getElementById("fragment_pal").textContent,
-                       //wireframe:true
-                   });
-                }
-            }, onProgress, onError );
+            }, onProgress, onError);
         });
 
 
         // カメラを作成
-        this.camera = new THREE.PerspectiveCamera( 105, window.innerWidth/window.innerHeight, 0.1, 1000 );
+        this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
-        this.scene.scale.set(1.2,1,1);
-        this.camera.position.z = 30;
-
-
+        this.scene.scale.set(1.2, 1, 1);
+        this.camera.position.z = 30
     }
-
-
-    // ******************************************************
-    public click()
+    public replaceShader(object:any)
     {
+        object.position.y = -1;
+        object.position.x = 0;
+        object.rotation.y = 0.08 + Math.PI;
+        let materials = object.children[0].material.materials;
+        for (let i = 0; i < materials.length; i++) {
 
+            let img = materials[i].map.image.src;//.attributes.currentSrc;
+            let _uniforms: any = {
+                time: {value: 1.0},
+                texture: {value: new THREE.TextureLoader().load(img)},
+                transparent: {value: 0},
+                threshold: {value: 0}
+            };
+
+            this.uniforms.push(_uniforms);
+
+
+            // materials[i].wireframe = true;
+            materials[i] = new THREE.ShaderMaterial({
+                uniforms: _uniforms,
+                vertexShader: document.getElementById("vertex_pal").textContent,
+                fragmentShader: document.getElementById("fragment_pal").textContent,
+                wireframe: true
+            });
+        }
+
+        return object;
     }
+
 
     // ******************************************************
     public keyUp(e:KeyboardEvent)
@@ -148,6 +152,7 @@ export default class SceneTemplate{
     // ******************************************************
     public update(time)
     {
+
 
 
         this.cube.position.z = this.gui.parameters.threshold;

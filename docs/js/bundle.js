@@ -9935,17 +9935,18 @@ var GUI = (function () {
 
 
 // *********** ひとつめのシーン *********** //
-var SceneTemplate = (function () {
+var SceneTemplatetransparent = (function () {
     // ******************************************************
-    function SceneTemplate(renderer, gui) {
+    function SceneTemplatetransparent(renderer, gui) {
         this.uniforms = [];
+        this.pal_objects = [];
         this.renderer = renderer;
         this.createScene();
         this.gui = gui;
         console.log("scene created!");
     }
     // ******************************************************
-    SceneTemplate.prototype.createScene = function () {
+    SceneTemplatetransparent.prototype.createScene = function () {
         var _this = this;
         this.scene = new THREE.Scene();
         // 立方体のジオメトリーを作成
@@ -9975,39 +9976,21 @@ var SceneTemplate = (function () {
                 console.log(Math.round(percentComplete, 2) + '% downloaded');
             }
         };
-        var onError = function (xhr) { };
+        var onError = function (xhr) {
+        };
         THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
         var mtlLoader = new THREE.MTLLoader();
+        // for(let i = 0; i < 2; i++)
+        // {}
         mtlLoader.setPath('models/pal/');
-        mtlLoader.load('pal_transformed.mtl', function (materials) {
+        mtlLoader.load('pal_transformed_decimated.mtl', function (materials) {
             materials.preload();
             var objLoader = new THREE.OBJLoader();
             objLoader.setMaterials(materials);
             objLoader.setPath('models/pal/');
-            objLoader.load('pal_transformed.obj', function (object) {
-                object.position.y = -1;
-                object.position.x = 0;
-                object.rotation.y = 0.08 + Math.PI;
+            objLoader.load('pal_transformed_decimated.obj', function (object) {
                 console.log(object);
                 _this.scene.add(object);
-                var materials = object.children[0].material.materials;
-                for (var i = 0; i < materials.length; i++) {
-                    var img = materials[i].map.image.src; //.attributes.currentSrc;
-                    var _uniforms = {
-                        time: { value: 1.0 },
-                        texture: { value: new THREE.TextureLoader().load(img) },
-                        threshold: { value: 0 }
-                    };
-                    _this.uniforms.push(_uniforms);
-                    // console.log(img);
-                    // console.log(materials[i]);
-                    materials[i].wireframe = true;
-                    materials[i] = new THREE.ShaderMaterial({
-                        uniforms: _uniforms,
-                        vertexShader: document.getElementById("vertex_pal").textContent,
-                        fragmentShader: document.getElementById("fragment_pal").textContent,
-                    });
-                }
             }, onProgress, onError);
         });
         // カメラを作成
@@ -10016,23 +9999,44 @@ var SceneTemplate = (function () {
         this.scene.scale.set(1.2, 1, 1);
         this.camera.position.z = 30;
     };
-    // ******************************************************
-    SceneTemplate.prototype.click = function () {
+    SceneTemplatetransparent.prototype.replaceShader = function (object) {
+        object.position.y = -1;
+        object.position.x = 0;
+        object.rotation.y = 0.08 + Math.PI;
+        var materials = object.children[0].material.materials;
+        for (var i = 0; i < materials.length; i++) {
+            var img = materials[i].map.image.src; //.attributes.currentSrc;
+            var _uniforms = {
+                time: { value: 1.0 },
+                texture: { value: new THREE.TextureLoader().load(img) },
+                transparent: { value: 0 },
+                threshold: { value: 0 }
+            };
+            this.uniforms.push(_uniforms);
+            // materials[i].wireframe = true;
+            materials[i] = new THREE.ShaderMaterial({
+                uniforms: _uniforms,
+                vertexShader: document.getElementById("vertex_pal").textContent,
+                fragmentShader: document.getElementById("fragment_pal").textContent,
+                wireframe: true
+            });
+        }
+        return object;
     };
     // ******************************************************
-    SceneTemplate.prototype.keyUp = function (e) {
+    SceneTemplatetransparent.prototype.keyUp = function (e) {
     };
     // ******************************************************
-    SceneTemplate.prototype.keyDown = function (e) {
+    SceneTemplatetransparent.prototype.keyDown = function (e) {
     };
     // ******************************************************
-    SceneTemplate.prototype.mouseMove = function (e) {
+    SceneTemplatetransparent.prototype.mouseMove = function (e) {
     };
     // ******************************************************
-    SceneTemplate.prototype.onMouseDown = function (e) {
+    SceneTemplatetransparent.prototype.onMouseDown = function (e) {
     };
     // ******************************************************
-    SceneTemplate.prototype.update = function (time) {
+    SceneTemplatetransparent.prototype.update = function (time) {
         this.cube.position.z = this.gui.parameters.threshold;
         var timerStep = 0.01;
         for (var i = 0; i < this.uniforms.length; i++) {
@@ -10043,9 +10047,9 @@ var SceneTemplate = (function () {
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
     };
-    return SceneTemplate;
+    return SceneTemplatetransparent;
 }());
-/* harmony default export */ __webpack_exports__["a"] = (SceneTemplate);
+/* harmony default export */ __webpack_exports__["a"] = (SceneTemplatetransparent);
 
 
 /***/ }),

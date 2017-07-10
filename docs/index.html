@@ -619,6 +619,7 @@
     <script id="fragment_pal" type="x-shader/x-fragment">
       uniform sampler2D texture;
       varying vec2 vUv;
+      uniform int transparent;
       void main( void ) {
       
           gl_FragColor = texture2D( texture, vUv );
