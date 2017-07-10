@@ -1,6 +1,7 @@
 import "./loaders/MTLLoader.js";
 import "./loaders/DDSLoader.js";
 import "./loaders/OBJLoader.js";
+import GUI from "./GUI";
 // *********** ひとつめのシーン *********** //
 export default class SceneTemplate{
 
@@ -11,11 +12,13 @@ export default class SceneTemplate{
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
     private uniforms:any[] = [];
+    private gui:GUI;
 
     // ******************************************************
-    constructor(renderer:THREE.WebGLRenderer) {
+    constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
         this.createScene();
+        this.gui = gui;
 
         console.log("scene created!")
     }
@@ -26,17 +29,26 @@ export default class SceneTemplate{
 
         this.scene = new THREE.Scene();
 
-        // // 立方体のジオメトリーを作成
-        // this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
-        // // 緑のマテリアルを作成
-        // this.material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-        // // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        // this.cube = new THREE.Mesh( this.geometry, this.material );
-        // // メッシュをシーンに追加
-        // this.scene.add( this.cube );
+        // 立方体のジオメトリーを作成
+        this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        // 緑のマテリアルを作成
+        this.material = new THREE.MeshStandardMaterial( {
+            roughness: 0.7,
+            color: 0xffffff,
+            bumpScale: 0.002,
+            metalness: 0.2
+        });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.cube = new THREE.Mesh( this.geometry, this.material );
+        // メッシュをシーンに追加
+        this.scene.add( this.cube );
 
         let ambient = new THREE.AmbientLight(0xffffff);
         this.scene.add(ambient);
+
+        let dLight = new THREE.DirectionalLight(0xffffff,0.2);
+        dLight.position.set(0,1,0).normalize();
+        this.scene.add(dLight);
 
         var directionalLight = new THREE.DirectionalLight( 0xffeedd );
         directionalLight.position.set( 0, 0, 1 ).normalize();
@@ -71,7 +83,8 @@ export default class SceneTemplate{
                     let img = materials[i].map.image.src;//.attributes.currentSrc;
                     let _uniforms:any = {
                         time:       { value: 1.0 },
-                        texture:    { value: new THREE.TextureLoader().load( img ) }
+                        texture:    { value: new THREE.TextureLoader().load( img ) },
+                        threshold: {value: 0}
                     };
                     this.uniforms.push(_uniforms);
                     // console.log(img);
@@ -94,7 +107,7 @@ export default class SceneTemplate{
         this.camera = new THREE.PerspectiveCamera( 105, window.innerWidth/window.innerHeight, 0.1, 1000 );
         // カメラ位置を設定
         this.scene.scale.set(1.2,1,1);
-        this.camera.position.z = 50;
+        this.camera.position.z = 30;
 
 
     }
@@ -137,15 +150,16 @@ export default class SceneTemplate{
     {
 
 
-            let timerStep:number = 0.01;
-            for(let i = 0; i < this.uniforms.length; i++)
-            {
-                console.log(this.uniforms[i]);
-                this.uniforms[i].time.value += timerStep;
-            }
+        this.cube.position.z = this.gui.parameters.threshold;
+        let timerStep:number = 0.01;
+        for(let i = 0; i < this.uniforms.length; i++)
+        {
+            console.log(this.uniforms[i]);
+            this.uniforms[i].time.value += timerStep;
+        }
 
 
-            this.scene.position.z += 0.1;
+            //this.scene.position.z += 0.1;
 
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;

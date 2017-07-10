@@ -4,6 +4,7 @@ import * as $ from "jquery";
 import Template from "./template";
 import Scene01 from "./Scene01";
 import VThree from "./VThree";
+import GUI from "./GUI";
 // const io = require('socket.io');
 
 class Main
@@ -12,6 +13,8 @@ class Main
     public test:Template;
     public scene01:Scene01;
     public socket:any;
+
+    public gui:GUI = new GUI();
 
 
 
@@ -25,7 +28,7 @@ class Main
         $.getJSON("json/vthree.config.json" , (config) => {
             $.getJSON("json/guisetting.json" , (data) => {
                 this.vthree = new VThree(1.0, false,config);
-                this.scene01 = new Scene01(this.vthree.renderer);
+                this.scene01 = new Scene01(this.vthree.renderer,this.gui);
                 this.vthree.addScene(this.scene01);
                 this.vthree.draw();
 
