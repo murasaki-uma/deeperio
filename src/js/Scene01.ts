@@ -1,6 +1,8 @@
 import "./loaders/MTLLoader.js";
 import "./loaders/DDSLoader.js";
 import "./loaders/OBJLoader.js";
+import "./loaders/FBXLoader.js";
+import "./loaders/ColladaLoader.js";
 import GUI from "./GUI";
 // *********** ひとつめのシーン *********** //
 export default class SceneTemplatetransparent{
@@ -13,7 +15,7 @@ export default class SceneTemplatetransparent{
     private cube:THREE.Mesh;
     private uniforms:any[] = [];
     private gui:GUI;
-
+    private pal:any;
     private pal_objects:any[] = [];
 
     // ******************************************************
@@ -64,25 +66,41 @@ export default class SceneTemplatetransparent{
         };
         var onError = function (xhr) {
         };
-        THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
-        var mtlLoader = new THREE.MTLLoader();
+        // THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
+        // var mtlLoader = new THREE.MTLLoader();
 
-        // for(let i = 0; i < 2; i++)
-        // {}
 
-        mtlLoader.setPath('models/pal/');
-        mtlLoader.load('pal_transformed_decimated.mtl', (materials) => {
-            materials.preload();
-            var objLoader = new THREE.OBJLoader();
-            objLoader.setMaterials(materials);
-            objLoader.setPath('models/pal/');
-            objLoader.load('pal_transformed_decimated.obj', (object) => {
+        //
+        // mtlLoader.setPath('models/pal/');
+        // mtlLoader.load('pal_transformed_decimated.mtl', (materials) => {
+        //     materials.preload();
+        //     var objLoader = new THREE.OBJLoader();
+        //     objLoader.setMaterials(materials);
+        //     objLoader.setPath('models/pal/');
+        //     objLoader.load('pal_transformed_decimated.obj', (object) => {
+        //
+        //         console.log(object);
+        //         this.scene.add(object);
+        //
+        //     }, onProgress, onError);
+        // });
 
+        var loader = new THREE.ColladaLoader();
+        loader.options.convertUpAxis = true;
+        for(let i = 0; i < 2; i++)
+        {
+            loader.load( './models/pal/pal.dae', ( collada )=> {
+                var object = collada.scene;
                 console.log(object);
-                this.scene.add(object);
+                object.position.y = -1;
+                object.position.x = 0;
+                object.rotation.y = 0.08 + Math.PI;
+                this.pal_objects.push(object);
+                this.scene.add( object );
+            },onProgress, onError );
+        }
 
-            }, onProgress, onError);
-        });
+
 
 
         // カメラを作成
@@ -91,33 +109,41 @@ export default class SceneTemplatetransparent{
         this.scene.scale.set(1.2, 1, 1);
         this.camera.position.z = 30
     }
-    public replaceShader(object:any)
+    public replaceShader_WireWave=(object:any,isTransparent:number, isWire:Boolean)=>
     {
-        object.position.y = -1;
-        object.position.x = 0;
-        object.rotation.y = 0.08 + Math.PI;
-        let materials = object.children[0].material.materials;
+
+        // let materials = object.children[0].material.materials;
+        let materials = object.children[0].children[0].material.materials;
+        console.log(materials);
         for (let i = 0; i < materials.length; i++) {
 
-            let img = materials[i].map.image.src;//.attributes.currentSrc;
-            let _uniforms: any = {
-                time: {value: 1.0},
-                texture: {value: new THREE.TextureLoader().load(img)},
-                transparent: {value: 0},
-                threshold: {value: 0}
-            };
-
-            this.uniforms.push(_uniforms);
+            //let img = materials[i].map.image.src;//.attributes.currentSrc;
+            console.log(materials[i]);
+            console.log(materials[i].map);
 
 
-            // materials[i].wireframe = true;
-            materials[i] = new THREE.ShaderMaterial({
-                uniforms: _uniforms,
-                vertexShader: document.getElementById("vertex_pal").textContent,
-                fragmentShader: document.getElementById("fragment_pal").textContent,
-                wireframe: true
-            });
-        }
+
+                console.log(materials[i].map.image);
+                let img = materials[i].map.image.currentSrc;
+                let _uniforms: any = {
+                    time: {value: 1.0},
+                    texture: {value: new THREE.TextureLoader().load(img)},
+                    transparent: {value: isTransparent},
+                    threshold: {value: 0}
+                };
+
+                this.uniforms.push(_uniforms);
+
+
+                // materials[i].wireframe = true;
+                materials[i] = new THREE.ShaderMaterial({
+                    uniforms: _uniforms,
+                    vertexShader: document.getElementById("vertex_pal").textContent,
+                    fragmentShader: document.getElementById("fragment_pal").textContent,
+                    wireframe: isWire,
+                    transparent:true
+                });
+            }
 
         return object;
     }
@@ -128,6 +154,17 @@ export default class SceneTemplatetransparent{
     {
 
     }
+
+    public click()
+    {
+        // for(let i = 0; i < this.pal_objects.length; i++)
+        // {
+        this.replaceShader_WireWave(this.pal_objects[0],0,true);
+        this.replaceShader_WireWave(this.pal_objects[1],1,false);
+        // }
+
+    }
+
 
     // ******************************************************
     public keyDown(e:KeyboardEvent)
@@ -159,8 +196,10 @@ export default class SceneTemplatetransparent{
         let timerStep:number = 0.01;
         for(let i = 0; i < this.uniforms.length; i++)
         {
-            console.log(this.uniforms[i]);
+            //console.log(this.uniforms[i]);
             this.uniforms[i].time.value += timerStep;
+            this.uniforms[i].threshold.value = Math.sin(time*0.001)*20.0;
+
         }
 
 
