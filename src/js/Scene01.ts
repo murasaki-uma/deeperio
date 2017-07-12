@@ -94,7 +94,8 @@ export default class SceneTemplatetransparent{
                 console.log(object);
                 object.position.y = -1;
                 object.position.x = 0;
-                object.rotation.y = 0.08 + Math.PI;
+
+                //object.rotation.y = 0.08 + Math.PI;
                 this.pal_objects.push(object);
                 this.scene.add( object );
             },onProgress, onError );
@@ -198,7 +199,7 @@ export default class SceneTemplatetransparent{
         {
             //console.log(this.uniforms[i]);
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = Math.sin(time*0.001)*20.0;
+            this.uniforms[i].threshold.value = this.gui.parameters.threshold;
 
         }
 

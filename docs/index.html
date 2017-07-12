@@ -641,14 +641,14 @@
               {
                   float d = distance(vec3(vPos.x,vPos.y,vPos.z), vec3(0,0,threshold));
       
-                  if(vPos.y > threshold-10.0 && vPos.y < threshold+10.0)
+                  if(d < 10.0)
                   {
                       alpha =( 1.0-(d/10.0))+0.2;
                       if(alpha > 1.0)
                       {
                           alpha = 1.0;
                       }
-                      alpha = 1.0;
+                      //alpha = 1.0;
       
                   } else
                   {
