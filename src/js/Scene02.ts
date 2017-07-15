@@ -30,6 +30,10 @@ export default class SceneTemplate{
     private geometry:THREE.BoxGeometry;
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
+    private pariking_materials:THREE.Material;
+    private clickCount = 0;
+    private uniforms:any;
+
 
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
@@ -43,6 +47,13 @@ export default class SceneTemplate{
     private createScene()
     {
 
+        this.uniforms ={
+            time: {value: 1.0},
+            texture: {value: null},
+            transparent: {value: 0},
+            threshold: {value: 0},
+            texturePosition: {value:null}
+          };
         this.scene = new THREE.Scene();
 
         // 立方体のジオメトリーを作成
@@ -65,19 +76,25 @@ export default class SceneTemplate{
 
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
-        for(let i = 0; i < 2; i++)
-        {
-            loader.load( './models/parking/parking.dae', ( collada )=> {
-                var object = collada.scene;
-                console.log(object);
-                // object.position.y = -1;
-                // object.position.x = 0;
+        // for(let i = 0; i < 2; i++)
+        // {
+        loader.load( './models/parking/parking.dae', ( collada )=> {
+            var object = collada.scene;
+            console.log(object);
+            // object.position.y = -1;
+            // object.position.x = 0;
 
-                object.rotation.y = Math.PI;
-                // this.pal_objects.push(object);
-                this.scene.add( object );
-            });
-        }
+            object.rotation.y = Math.PI;
+            // this.pal_objects.push(object);
+            console.log("parking");
+            console.log(object);
+            this.pariking_materials = object.children[0].children[0].material;
+            console.log(this.pariking_materials);
+            // this.pariking_materials.side = THREE.DoubleSide;
+
+            this.scene.add( object );
+        });
+        // }
 
 
 
@@ -148,6 +165,27 @@ export default class SceneTemplate{
     // ******************************************************
     public click()
     {
+        console.log(this.pariking_materials);
+        // if(this.clickCount == 0)
+        // {
+        //
+        //     let img = this.pariking_materials.map.image.currentSrc;
+        //
+        //     this.uniforms.texture.value = new THREE.TextureLoader().load(img);
+        //
+        //     this.pariking_materials = new THREE.ShaderMaterial({
+        //         uniforms: this.uniforms,
+        //         vertexShader: document.getElementById("vertex_pal").textContent,
+        //         fragmentShader: document.getElementById("fragment_pal").textContent,
+        //         wireframe: true,
+        //         transparent:true,
+        //         side:THREE.DoubleSide
+        //         // drawBuffer:true
+        //     });
+        //     this.clickCount++;
+        // }
+            this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
+
 
     }
 
@@ -180,8 +218,13 @@ export default class SceneTemplate{
     public update(time)
     {
 
-        this.cube.rotation.x += 0.1;
-        this.cube.rotation.y += 0.1;
+        // this.cube.rotation.x += 0.1;
+        // this.cube.rotation.y += 0.1;
+
+        this.uniforms.time.value += 0.01;
+
+        this.scene.rotateY(0.01);
+        this.scene.rotateX(0.005);
 
     }
 

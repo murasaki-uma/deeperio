@@ -10108,6 +10108,7 @@ var WireBox = (function () {
 var SceneTemplate = (function () {
     // ******************************************************
     function SceneTemplate(renderer, gui) {
+        this.clickCount = 0;
         this.renderer = renderer;
         this.createScene();
         console.log("scene created!");
@@ -10115,6 +10116,13 @@ var SceneTemplate = (function () {
     // ******************************************************
     SceneTemplate.prototype.createScene = function () {
         var _this = this;
+        this.uniforms = {
+            time: { value: 1.0 },
+            texture: { value: null },
+            transparent: { value: 0 },
+            threshold: { value: 0 },
+            texturePosition: { value: null }
+        };
         this.scene = new THREE.Scene();
         // 立方体のジオメトリーを作成
         this.geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -10131,17 +10139,23 @@ var SceneTemplate = (function () {
         this.camera.position.z = 5;
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
-        for (var i = 0; i < 2; i++) {
-            loader.load('./models/parking/parking.dae', function (collada) {
-                var object = collada.scene;
-                console.log(object);
-                // object.position.y = -1;
-                // object.position.x = 0;
-                object.rotation.y = Math.PI;
-                // this.pal_objects.push(object);
-                _this.scene.add(object);
-            });
-        }
+        // for(let i = 0; i < 2; i++)
+        // {
+        loader.load('./models/parking/parking.dae', function (collada) {
+            var object = collada.scene;
+            console.log(object);
+            // object.position.y = -1;
+            // object.position.x = 0;
+            object.rotation.y = Math.PI;
+            // this.pal_objects.push(object);
+            console.log("parking");
+            console.log(object);
+            _this.pariking_materials = object.children[0].children[0].material;
+            console.log(_this.pariking_materials);
+            // this.pariking_materials.side = THREE.DoubleSide;
+            _this.scene.add(object);
+        });
+        // }
         this.createWireBox();
     };
     SceneTemplate.prototype.createWireBox = function () {
@@ -10189,6 +10203,26 @@ var SceneTemplate = (function () {
     };
     // ******************************************************
     SceneTemplate.prototype.click = function () {
+        console.log(this.pariking_materials);
+        // if(this.clickCount == 0)
+        // {
+        //
+        //     let img = this.pariking_materials.map.image.currentSrc;
+        //
+        //     this.uniforms.texture.value = new THREE.TextureLoader().load(img);
+        //
+        //     this.pariking_materials = new THREE.ShaderMaterial({
+        //         uniforms: this.uniforms,
+        //         vertexShader: document.getElementById("vertex_pal").textContent,
+        //         fragmentShader: document.getElementById("fragment_pal").textContent,
+        //         wireframe: true,
+        //         transparent:true,
+        //         side:THREE.DoubleSide
+        //         // drawBuffer:true
+        //     });
+        //     this.clickCount++;
+        // }
+        this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
     };
     // ******************************************************
     SceneTemplate.prototype.keyUp = function (e) {
@@ -10204,8 +10238,11 @@ var SceneTemplate = (function () {
     };
     // ******************************************************
     SceneTemplate.prototype.update = function (time) {
-        this.cube.rotation.x += 0.1;
-        this.cube.rotation.y += 0.1;
+        // this.cube.rotation.x += 0.1;
+        // this.cube.rotation.y += 0.1;
+        this.uniforms.time.value += 0.01;
+        this.scene.rotateY(0.01);
+        this.scene.rotateX(0.005);
     };
     return SceneTemplate;
 }());
