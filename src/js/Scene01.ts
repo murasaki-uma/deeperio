@@ -4,6 +4,8 @@ import "./loaders/OBJLoader.js";
 import "./loaders/FBXLoader.js";
 import "./loaders/ColladaLoader.js";
 import GUI from "./GUI";
+import "./GPUComputationRenderer.js";
+
 // *********** ひとつめのシーン *********** //
 export default class SceneTemplatetransparent{
 
@@ -18,12 +20,20 @@ export default class SceneTemplatetransparent{
     private pal:any;
     private pal_objects:any[] = [];
 
+    // GPU Compute
+    private gpuCompute:any;
+    private positionVariable:any;
+    private TEXTURE_WIDTH:number = 320;
+    private TEXTURE_HEIGHT:number = 320;
+
+
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
         this.createScene();
         this.gui = gui;
 
+        this.initComputeRenderer();
         console.log("scene created!")
     }
 
@@ -122,15 +132,14 @@ export default class SceneTemplatetransparent{
             console.log(materials[i]);
             console.log(materials[i].map);
 
-
-
                 console.log(materials[i].map.image);
                 let img = materials[i].map.image.currentSrc;
                 let _uniforms: any = {
                     time: {value: 1.0},
                     texture: {value: new THREE.TextureLoader().load(img)},
                     transparent: {value: isTransparent},
-                    threshold: {value: 0}
+                    threshold: {value: 0},
+                    texturePosition: {value:null}
                 };
 
                 this.uniforms.push(_uniforms);
@@ -148,6 +157,29 @@ export default class SceneTemplatetransparent{
 
         return object;
     }
+
+    public initComputeRenderer()
+    {
+        this.gpuCompute = new GPUComputationRenderer( this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer );
+        let dtPosition = this.gpuCompute.createTexture();
+        this.fillTexture(dtPosition);
+
+        this.positionVariable = this.gpuCompute.addVariable( "texturePosition", document.getElementById( 'computeShaderPosition' ).textContent, dtPosition );
+        // this.gpuCompute.setVariableDependencies( this.positionVariable, [ this.positionVariable, velocityVariable ] );
+
+        const error = this.gpuCompute.init();
+        if ( error !== null ) {
+            console.error( error );
+        }
+    }
+
+    public fillTexture(dtposition:any)
+    {
+
+    }
+
+
+
 
 
     // ******************************************************
@@ -194,10 +226,11 @@ export default class SceneTemplatetransparent{
 
 
         this.cube.position.z = this.gui.parameters.threshold;
-        let timerStep:number = 0.01;
+        let timerStep:number = 0.004;
         for(let i = 0; i < this.uniforms.length; i++)
         {
             //console.log(this.uniforms[i]);
+            // this.uniforms[i].texturePosition.value = this.gpuCompute
             this.uniforms[i].time.value += timerStep;
             this.uniforms[i].threshold.value = this.gui.parameters.threshold;
 

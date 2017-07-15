@@ -7,127 +7,9 @@
     -->
     <meta charset="UTF-8"/>
     <meta name="robots" content="noindex, nofollow"/>
-    <script id="computeShaderStartPosition" type="x-shader/x-fragment">
-      // 現在の位置情報を決定する
-      //uniform float u_time;
-      
-      void main() {
-          vec2 uv = gl_FragCoord.xy / resolution.xy;
-          vec4 tmpStPos = texture2D( textureStartPosition, uv );
-      
-          gl_FragColor = vec4(tmpStPos);
-      }
-      
-    </script>
-    <script id="computeShaderAnimation02" type="x-shader/x-fragment">
-      // 現在の位置情報を決定する
-      
-      uniform float u_time;
-      uniform float isPause;
-      
-      void main() {
-          vec2 uv = gl_FragCoord.xy / resolution.xy;
-          vec4 tmpAnm02 = texture2D( textureAnimation02, uv );
-          vec4 tmpPos = texture2D( texturePosition, uv );
-          vec3 pos = tmpPos.xyz;
-      
-          // 次はこれ。
-          if(pos.x < u_time && isPause == 1.0)
-          {
-              tmpAnm02.z += (tmpAnm02.y - tmpAnm02.z) * 0.1;
-          }
-      
-          if(u_time < pos.x && isPause == 0.0)
-          {
-              tmpAnm02.z += (1.0 - tmpAnm02.z) * 0.1;
-          }
-      
-          gl_FragColor = vec4(tmpAnm02);
-      }
-      
-    </script>
-    <script id="computeShaderAnimation" type="x-shader/x-fragment">
-      // 現在の位置情報を決定する
-      
-      
-      uniform float u_time;
-      uniform float particleScaleUpSpeed;
-      uniform float particleScaleDownSpeed;
-      uniform float particleMaxRad;
-      uniform float particleMinRad;
-      uniform float isPause;
-      
-      float qinticOut(float t) {
-        return 1.0 - (pow(t - 1.0, 5.0));
-      }
-      
-      void main() {
-          vec2 uv = gl_FragCoord.xy / resolution.xy;
-          vec4 tmpAnm = texture2D( textureAnimation, uv );
-      
-          vec4 tmpPos = texture2D( texturePosition, uv );
-          vec3 pos = tmpPos.xyz;
-      
-      
-      
-      
-      
-      
-          // パーティクルのサイズ
-          if(pos.x < u_time && isPause == 1.0)
-          {
-      
-      
-              if(tmpAnm.y == 0.0)
-              {
-                  tmpAnm.x +=(particleMaxRad - tmpAnm.x) * particleScaleUpSpeed;
-                  if(tmpAnm.x >= particleMaxRad*0.9)
-                  {
-                      tmpAnm.y = 1.0;
-                  }
-              }
-              else
-              {
-                  tmpAnm.x +=(particleMinRad - tmpAnm.x) * particleScaleDownSpeed;
-              }
-      
-              if(tmpAnm.z < 1.0){
-                  tmpAnm.z += 0.01;
-                  tmpAnm.w = qinticOut(tmpAnm.z);
-      
-              } else
-              {
-                  tmpAnm.z =1.0;
-              }
-      
-      
-      
-          }
-      
-          if(u_time < pos.x && isPause == 0.0)
-          {
-              tmpAnm.x +=(particleMaxRad*0.5 - tmpAnm.x) * particleScaleUpSpeed*1.5;
-              tmpAnm.y == 0.0;
-      
-              // easing
-              tmpAnm.w = 0.0;
-              tmpAnm.z =0.0;
-          }
-      
-      
-          gl_FragColor = vec4(tmpAnm);
-      }
-      
-    </script>
     <script id="computeShaderPosition" type="x-shader/x-fragment">
       // 現在の位置情報を決定する
       #define delta 0.1;
-      
-      uniform float u_time;
-      uniform float speed;
-      uniform float arrayCounter;
-      uniform float isPause;
-      float Pi = 3.141592;
       
       float random(vec2 co){
               return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
@@ -136,337 +18,14 @@
       void main() {
           vec2 uv = gl_FragCoord.xy / resolution.xy;
           vec4 tmpPos = texture2D( texturePosition, uv );
-          vec4 tmpAnm   = texture2D( textureAnimation, uv );
-          vec4 tmpAnm02 = texture2D( textureAnimation02, uv );
-          vec4 tmpStpos = texture2D( textureStartPosition, uv );
+          //vec4 tmpAnm   = texture2D( textureAnimation, uv );
           vec3 pos = tmpPos.xyz;
       
-          vec4 tmpVel = texture2D( textureVelocity, uv );
-          // velが移動する方向(もう一つ下のcomputeShaderVelocityを参照)
-          vec3 vel = tmpVel.xyz;
-          vel.y *= 4.0;
-          vel.x *= 2.0;
-          vel.z *= 2.0;
-      
-          if(pos.x < u_time && isPause == 1.0)
-          {
-             pos += vel * speed * (1.0-tmpAnm.w*0.9) * tmpAnm02.x;
-      
-      
-              tmpPos.w += (0.1 - tmpPos.w)*0.25;
-      
-              if(tmpPos.w < 0.0)
-              {
-      
-                  tmpPos.w = random(pos.xy) * 10.0;
-                  float theta = 2.0 * Pi * random(pos.yy);
-                  float phi = Pi * random(pos.zz);
-                  float r = 5.0 * random(pos.xy);
-                  pos = vec3(r * sin(theta) * cos(phi) * 2.0, r * sin(theta) * sin(phi), r * cos(theta));
-      
-                  pos = vec3(random(pos.xy)*192.0-96.0, random(pos.yz)*10.0,random(pos.zx)*108.0-54.0);
-      
-                  tmpPos.w = random(pos.xy)*30.0 + random(pos.zy) * 20.0;
-      
-              }
-      
-          }
-      
-          if(u_time < tmpStpos.x && isPause == 0.0)
-          {
-              pos += (tmpStpos.xyz - pos) * 0.1;
-              tmpPos.w += (1.0 - tmpPos.w)*0.25;
-          }
-      
-          gl_FragColor = vec4( pos, tmpPos.w );
-      }
-      
-    </script>
-    <script id="computeShaderVelocity" type="x-shader/x-fragment">
-      vec3 mod289(vec3 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
-      
-      vec4 mod289(vec4 x) {
-        return x - floor(x * (1.0 / 289.0)) * 289.0;
-      }
-      
-      vec4 permute(vec4 x) {
-           return mod289(((x*34.0)+1.0)*x);
-      }
-      
-      vec4 taylorInvSqrt(vec4 r)
-      {
-        return 1.79284291400159 - 0.85373472095314 * r;
-      }
-      
-      float snoise(vec3 v)
-        {
-        const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
-        const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
-      
-      // First corner
-        vec3 i  = floor(v + dot(v, C.yyy) );
-        vec3 x0 =   v - i + dot(i, C.xxx) ;
-      
-      // Other corners
-        vec3 g = step(x0.yzx, x0.xyz);
-        vec3 l = 1.0 - g;
-        vec3 i1 = min( g.xyz, l.zxy );
-        vec3 i2 = max( g.xyz, l.zxy );
-      
-        //   x0 = x0 - 0.0 + 0.0 * C.xxx;
-        //   x1 = x0 - i1  + 1.0 * C.xxx;
-        //   x2 = x0 - i2  + 2.0 * C.xxx;
-        //   x3 = x0 - 1.0 + 3.0 * C.xxx;
-        vec3 x1 = x0 - i1 + C.xxx;
-        vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
-        vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
-      
-      // Permutations
-        i = mod289(i);
-        vec4 p = permute( permute( permute(
-                   i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-                 + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
-                 + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-      
-      // Gradients: 7x7 points over a square, mapped onto an octahedron.
-      // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
-        float n_ = 0.142857142857; // 1.0/7.0
-        vec3  ns = n_ * D.wyz - D.xzx;
-      
-        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
-      
-        vec4 x_ = floor(j * ns.z);
-        vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
-      
-        vec4 x = x_ *ns.x + ns.yyyy;
-        vec4 y = y_ *ns.x + ns.yyyy;
-        vec4 h = 1.0 - abs(x) - abs(y);
-      
-        vec4 b0 = vec4( x.xy, y.xy );
-        vec4 b1 = vec4( x.zw, y.zw );
-      
-        //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-        //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
-        vec4 s0 = floor(b0)*2.0 + 1.0;
-        vec4 s1 = floor(b1)*2.0 + 1.0;
-        vec4 sh = -step(h, vec4(0.0));
-      
-        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-      
-        vec3 p0 = vec3(a0.xy,h.x);
-        vec3 p1 = vec3(a0.zw,h.y);
-        vec3 p2 = vec3(a1.xy,h.z);
-        vec3 p3 = vec3(a1.zw,h.w);
-      
-      //Normalise gradients
-        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-        p0 *= norm.x;
-        p1 *= norm.y;
-        p2 *= norm.z;
-        p3 *= norm.w;
-      
-      // Mix final noise value
-        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-        m = m * m;
-        return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
-                                      dot(p2,x2), dot(p3,x3) ) );
-        }
-      
-      vec3 snoiseVec3( vec3 x ){
-      
-        float s  = snoise(vec3( x ));
-        float s1 = snoise(vec3( x.y - 19.1 , x.z + 33.4 , x.x + 47.2 ));
-        float s2 = snoise(vec3( x.z + 74.2 , x.x - 124.5 , x.y + 99.4 ));
-        vec3 c = vec3( s , s1 , s2 );
-        return c;
-      
-      }
-      
-      
-      vec3 curlNoise( vec3 p ){
-      
-        const float e = .1;
-        vec3 dx = vec3( e   , 0.0 , 0.0 );
-        vec3 dy = vec3( 0.0 , e   , 0.0 );
-        vec3 dz = vec3( 0.0 , 0.0 , e   );
-      
-        vec3 p_x0 = snoiseVec3( p - dx );
-        vec3 p_x1 = snoiseVec3( p + dx );
-        vec3 p_y0 = snoiseVec3( p - dy );
-        vec3 p_y1 = snoiseVec3( p + dy );
-        vec3 p_z0 = snoiseVec3( p - dz );
-        vec3 p_z1 = snoiseVec3( p + dz );
-      
-        float x = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
-        float y = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
-        float z = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
-      
-        const float divisor = 1.0 / ( 2.0 * e );
-        return normalize( vec3( x , y , z ) * divisor );
-      
+          gl_FragColor = tmpPos;
       }
       
       
       
-      //uniform float time;
-      vec3 vel;
-      float scale = 0.03;
-      float  speed = 0.1;
-      
-      float u_scale = 0.41;
-      float u_timestep = 0.5;
-      uniform float u_time;
-      uniform float isPause;
-      uniform float radiusSpeed;
-      
-      float random(vec2 co){
-          return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-      }
-      
-      void main() {
-          vec2 uv = gl_FragCoord.xy / resolution.xy;
-      
-          vec4 tmpPos = texture2D( texturePosition, uv );
-          vec3 pos = tmpPos.xyz;
-      
-          vec4 tmpVel = texture2D( textureVelocity, uv );
-          vec4 tmpStpos = texture2D( textureStartPosition, uv );
-      
-          vec3 vel = curlNoise(pos.xyz*0.05);
-      
-          if(pos.x < u_time && isPause == 1.0)
-          {
-      
-              if(tmpVel.w > 0.1)
-              {
-                  tmpVel.w -= radiusSpeed;
-              }
-      
-          }
-      
-          if(u_time < pos.x && isPause == 0.0)
-          {
-              //if(tmpVel.w < 1.0)
-              //{
-                  tmpVel.w = 1.0;
-              //}
-      
-          }
-      
-      
-      
-          //tmpVel.w = 0.1;
-      
-      
-          gl_FragColor = vec4( vel.xyz, tmpVel.w );
-      }
-      
-    </script><!-- Particles vertex shader -->
-    <script type="x-shader/x-vertex" id="particleVertexShader">
-      #include <common>
-      uniform sampler2D texturePosition;
-      uniform sampler2D textureVelocity;
-      uniform sampler2D textureAnimation;
-      uniform sampler2D textureAnimation02;
-      uniform float cameraConstant;
-      uniform float density;
-      uniform float texImgWidth;
-      uniform float texImgHeight;
-      varying vec4 vColor;
-      varying vec2 vUv;
-      uniform float time;
-      
-      varying vec3 vPos;
-      varying vec4 vTmpPos;
-      varying float vRadius;
-      
-      
-      void main() {
-          vec4 anmTemp = texture2D( textureAnimation, uv);
-          vec4 anmTemp02 = texture2D( textureAnimation02, uv);
-          vec4 posTemp = texture2D( texturePosition, uv );
-          vec4 velTemp = texture2D( textureVelocity, uv );
-          vec3 pos = posTemp.xyz;
-          vTmpPos = posTemp;
-          vColor = vec4( 1.0,1.0,1.0,1.0 );
-      
-          // ポイントのサイズを決定
-          vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-          gl_PointSize = anmTemp.x / ( - mvPosition.z );
-      
-          vRadius = velTemp.w*anmTemp02.z;
-      
-          // uv情報の引き渡し
-          vUv = vec2(pos.x/texImgWidth+0.5,pos.z/texImgHeight+0.5);
-      
-          //pos = rotate(pos, posTemp.x, vec3(0.0, 1.0, 0.0));
-      
-          // 変換して格納
-          vPos = pos.xyz;
-          gl_Position = projectionMatrix * mvPosition;
-      }
-      
-    </script><!-- Particles fragment shader -->
-    <script type="x-shader/x-fragment" id="particleFragmentShader">
-      // VertexShaderから受け取った色を格納するだけ。
-      varying vec4 vColor;
-      varying vec2 vUv;
-      uniform sampler2D map;
-      varying vec3 vPos;
-      varying vec4 vTmpPos;
-      uniform float borderRadius;
-      varying float vRadius;
-      
-      void main() {
-      
-          // 丸い形に色をぬるための計算
-          float f = length( gl_PointCoord - vec2( 0.5, 0.5 ) );
-          if ( f > vRadius ) {
-              discard;
-          }
-          vec4 diffuseColor = texture2D(map, vec2(vUv.x,1.0-vUv.y));
-          //vColor.w = 1.0;
-          diffuseColor.w *= vTmpPos.w;
-          gl_FragColor = vColor * diffuseColor;
-      
-          //gl_FragColor = vColor;
-      }
-      
-    </script>
-    <script id="planeVertexShader" type="x-shader/x-vertex">
-      varying vec2 vUv;
-      varying vec3 pos;
-      void main()	{
-          vUv = uv;
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          pos = position.xyz;
-          mvPosition.z += 0.5;
-          gl_Position = projectionMatrix * mvPosition;
-      }
-      
-    </script>
-    <script id="planeFragmentShader" type="x-shader/x-fragment">
-      uniform sampler2D map;
-      uniform float u_time;
-      varying vec2 vUv;
-      varying vec3 pos;
-      uniform float isPause;
-      // 上のテクスチャの追いつく具合を調整
-      uniform float border;
-      
-          void main()
-          {
-      
-      
-            if(pos.x < u_time+border)
-            {
-              discard;
-            }
-            gl_FragColor = texture2D(map, vUv);
-          }
       
     </script>
     <script id="vertex_pal" type="x-shader/x-vertex">
@@ -604,14 +163,28 @@
       void main()
       {
           vUv = uv;
+          vec3 p = position.xyz;
+          float d = distance(vec3(p.x,p.y,p.z), vec3(0,0,threshold));
+          float height = 0.0;
+          if(d < 10.0)
+          {
+              height =( 1.0-(d/10.0))*3.0 + 0.3;
+      
+          }
       
           //position.y += sin(time)*0.01;
-          vec3 p = position.xyz;
-          float noisey = snoise(p*0.5)*0.8;
-          float noisex = snoise(p.xzy*0.5)*0.8;
-          p.y += sin(p.z+time)*0.5;
+      
+          float noisey = snoise(p*0.5)*0.4;
+          float noisex = snoise(p.xzy*0.5)*0.4;
+          p.y += sin(p.z+time)*0.3;
           p.x += sin(p.z*0.5+time)*noisex;
+      
+      
+      
+          p.y += height;
           vPos = p;
+      
+      
       
           vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
       

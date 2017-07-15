@@ -29,7 +29,7 @@ export default class GUI
 
     public init()
     {
-        this.rendering.add(this.parameters, 'threshold',-150.0,50.0);
+        this.rendering.add(this.parameters, 'threshold',-30.0,30.0);
 
 
 
