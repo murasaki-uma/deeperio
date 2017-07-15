@@ -9976,7 +9976,7 @@ var SceneTemplatetransparent = (function () {
                     vertexShader: document.getElementById("vertex_pal").textContent,
                     fragmentShader: document.getElementById("fragment_pal").textContent,
                     wireframe: isWire,
-                    transparent: true
+                    transparent: true,
                 });
             }
             return object;
@@ -9984,7 +9984,6 @@ var SceneTemplatetransparent = (function () {
         this.renderer = renderer;
         this.createScene();
         this.gui = gui;
-        this.initComputeRenderer();
         console.log("scene created!");
     }
     // ******************************************************
@@ -10020,22 +10019,6 @@ var SceneTemplatetransparent = (function () {
         };
         var onError = function (xhr) {
         };
-        // THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
-        // var mtlLoader = new THREE.MTLLoader();
-        //
-        // mtlLoader.setPath('models/pal/');
-        // mtlLoader.load('pal_transformed_decimated.mtl', (materials) => {
-        //     materials.preload();
-        //     var objLoader = new THREE.OBJLoader();
-        //     objLoader.setMaterials(materials);
-        //     objLoader.setPath('models/pal/');
-        //     objLoader.load('pal_transformed_decimated.obj', (object) => {
-        //
-        //         console.log(object);
-        //         this.scene.add(object);
-        //
-        //     }, onProgress, onError);
-        // });
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
         for (var i = 0; i < 2; i++) {
@@ -10054,19 +10037,32 @@ var SceneTemplatetransparent = (function () {
         // カメラ位置を設定
         this.scene.scale.set(1.2, 1, 1);
         this.camera.position.z = 30;
+        this.initComputeRenderer();
     };
     SceneTemplatetransparent.prototype.initComputeRenderer = function () {
         this.gpuCompute = new GPUComputationRenderer(this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer);
+        console.log(this.gpuCompute);
         var dtPosition = this.gpuCompute.createTexture();
         this.fillTexture(dtPosition);
         this.positionVariable = this.gpuCompute.addVariable("texturePosition", document.getElementById('computeShaderPosition').textContent, dtPosition);
-        // this.gpuCompute.setVariableDependencies( this.positionVariable, [ this.positionVariable, velocityVariable ] );
+        this.gpuCompute.setVariableDependencies(this.positionVariable, [this.positionVariable]);
         var error = this.gpuCompute.init();
         if (error !== null) {
             console.error(error);
         }
     };
-    SceneTemplatetransparent.prototype.fillTexture = function (dtposition) {
+    SceneTemplatetransparent.prototype.fillTexture = function (texturePosition) {
+        var posArray = texturePosition.image.data;
+        for (var k = 0, k1 = posArray.length; k < k1; k += 4) {
+            var x, y, z;
+            x = 0;
+            y = 0;
+            z = 0;
+            posArray[k + 0] = x;
+            posArray[k + 1] = y;
+            posArray[k + 2] = z;
+            posArray[k + 3] = 0;
+        }
     };
     // ******************************************************
     SceneTemplatetransparent.prototype.keyUp = function (e) {
@@ -10089,11 +10085,12 @@ var SceneTemplatetransparent = (function () {
     };
     // ******************************************************
     SceneTemplatetransparent.prototype.update = function (time) {
+        this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
         var timerStep = 0.004;
         for (var i = 0; i < this.uniforms.length; i++) {
             //console.log(this.uniforms[i]);
-            // this.uniforms[i].texturePosition.value = this.gpuCompute
+            this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
             this.uniforms[i].time.value += timerStep;
             this.uniforms[i].threshold.value = this.gui.parameters.threshold;
         }

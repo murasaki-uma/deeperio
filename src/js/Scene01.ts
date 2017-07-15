@@ -22,7 +22,11 @@ export default class SceneTemplatetransparent{
 
     // GPU Compute
     private gpuCompute:any;
+    private velocityVariable:any;
     private positionVariable:any;
+    private positionUniforms:any;
+    private velocityUniforms;
+
     private TEXTURE_WIDTH:number = 320;
     private TEXTURE_HEIGHT:number = 320;
 
@@ -33,7 +37,7 @@ export default class SceneTemplatetransparent{
         this.createScene();
         this.gui = gui;
 
-        this.initComputeRenderer();
+
         console.log("scene created!")
     }
 
@@ -76,24 +80,6 @@ export default class SceneTemplatetransparent{
         };
         var onError = function (xhr) {
         };
-        // THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
-        // var mtlLoader = new THREE.MTLLoader();
-
-
-        //
-        // mtlLoader.setPath('models/pal/');
-        // mtlLoader.load('pal_transformed_decimated.mtl', (materials) => {
-        //     materials.preload();
-        //     var objLoader = new THREE.OBJLoader();
-        //     objLoader.setMaterials(materials);
-        //     objLoader.setPath('models/pal/');
-        //     objLoader.load('pal_transformed_decimated.obj', (object) => {
-        //
-        //         console.log(object);
-        //         this.scene.add(object);
-        //
-        //     }, onProgress, onError);
-        // });
 
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
@@ -114,11 +100,13 @@ export default class SceneTemplatetransparent{
 
 
 
+
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
         this.scene.scale.set(1.2, 1, 1);
         this.camera.position.z = 30
+        this.initComputeRenderer();
     }
     public replaceShader_WireWave=(object:any,isTransparent:number, isWire:Boolean)=>
     {
@@ -151,9 +139,11 @@ export default class SceneTemplatetransparent{
                     vertexShader: document.getElementById("vertex_pal").textContent,
                     fragmentShader: document.getElementById("fragment_pal").textContent,
                     wireframe: isWire,
-                    transparent:true
+                    transparent:true,
+                    // drawBuffer:true
                 });
             }
+
 
         return object;
     }
@@ -161,11 +151,12 @@ export default class SceneTemplatetransparent{
     public initComputeRenderer()
     {
         this.gpuCompute = new GPUComputationRenderer( this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer );
+        console.log(this.gpuCompute);
         let dtPosition = this.gpuCompute.createTexture();
         this.fillTexture(dtPosition);
 
         this.positionVariable = this.gpuCompute.addVariable( "texturePosition", document.getElementById( 'computeShaderPosition' ).textContent, dtPosition );
-        // this.gpuCompute.setVariableDependencies( this.positionVariable, [ this.positionVariable, velocityVariable ] );
+        this.gpuCompute.setVariableDependencies( this.positionVariable, [ this.positionVariable ] );
 
         const error = this.gpuCompute.init();
         if ( error !== null ) {
@@ -173,9 +164,22 @@ export default class SceneTemplatetransparent{
         }
     }
 
-    public fillTexture(dtposition:any)
+    public fillTexture(texturePosition:any)
     {
+        let posArray = texturePosition.image.data;
+        for(let k = 0, k1 = posArray.length; k < k1; k+=4)
+        {
+            var x,y,z;
+            x = 0;
+            y = 0;
+            z = 0;
 
+            posArray[k+0] = x;
+            posArray[k+1] = y;
+            posArray[k+2] = z;
+            posArray[k+3] = 0;
+
+        }
     }
 
 
@@ -224,13 +228,13 @@ export default class SceneTemplatetransparent{
     {
 
 
-
+        this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
         let timerStep:number = 0.004;
         for(let i = 0; i < this.uniforms.length; i++)
         {
             //console.log(this.uniforms[i]);
-            // this.uniforms[i].texturePosition.value = this.gpuCompute
+            this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget( this.positionVariable ).texture;
             this.uniforms[i].time.value += timerStep;
             this.uniforms[i].threshold.value = this.gui.parameters.threshold;
 
