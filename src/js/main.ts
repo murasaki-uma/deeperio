@@ -3,8 +3,15 @@ declare function require(x: string): any;
 import * as $ from "jquery";
 import Template from "./template";
 import Scene01 from "./Scene01";
+import Scene02 from "./Scene02";
 import VThree from "./VThree";
 import GUI from "./GUI";
+import "./loaders/MTLLoader.js";
+import "./loaders/DDSLoader.js";
+import "./loaders/OBJLoader.js";
+import "./loaders/FBXLoader.js";
+import "./loaders/ColladaLoader.js";
+import "./GPUComputationRenderer.js";
 // const io = require('socket.io');
 
 class Main
@@ -12,6 +19,7 @@ class Main
     public vthree:VThree;
     public test:Template;
     public scene01:Scene01;
+    public scene02:Scene02;
     public socket:any;
 
     public gui:GUI = new GUI();
@@ -29,7 +37,9 @@ class Main
             $.getJSON("json/guisetting.json" , (data) => {
                 this.vthree = new VThree(1.0, false,config);
                 this.scene01 = new Scene01(this.vthree.renderer,this.gui);
+                this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 this.vthree.addScene(this.scene01);
+                this.vthree.addScene(this.scene02);
                 this.vthree.draw();
 
                 this.vthree.isUpdate = true;
@@ -46,8 +56,7 @@ class Main
             });
         });
     }
-
-
+    
 
     public  update(time) {
         requestAnimationFrame(this.update.bind(this));

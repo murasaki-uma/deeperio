@@ -39,6 +39,8 @@ export default class SceneTemplate{
 
 
 
+
+
     }
 
 
@@ -56,6 +58,12 @@ export default class SceneTemplate{
 
     // ******************************************************
     public mouseMove(e:MouseEvent)
+    {
+
+    }
+
+    // ******************************************************
+    public keyDown(e:KeyboardEvent)
     {
 
     }

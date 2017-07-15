@@ -1,10 +1,5 @@
-import "./loaders/MTLLoader.js";
-import "./loaders/DDSLoader.js";
-import "./loaders/OBJLoader.js";
-import "./loaders/FBXLoader.js";
-import "./loaders/ColladaLoader.js";
 import GUI from "./GUI";
-import "./GPUComputationRenderer.js";
+
 
 // *********** ひとつめのシーン *********** //
 export default class SceneTemplatetransparent{
@@ -19,7 +14,6 @@ export default class SceneTemplatetransparent{
     private gui:GUI;
     private pal:any;
     private pal_objects:any[] = [];
-
     // GPU Compute
     private gpuCompute:any;
     private velocityVariable:any;
@@ -140,6 +134,7 @@ export default class SceneTemplatetransparent{
                     fragmentShader: document.getElementById("fragment_pal").textContent,
                     wireframe: isWire,
                     transparent:true,
+                    side:THREE.DoubleSide
                     // drawBuffer:true
                 });
             }
@@ -173,7 +168,6 @@ export default class SceneTemplatetransparent{
             x = 0;
             y = 0;
             z = 0;
-
             posArray[k+0] = x;
             posArray[k+1] = y;
             posArray[k+2] = z;
