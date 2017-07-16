@@ -10,11 +10,21 @@ export default class Scene03{
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
 
+    private arms01:THREE.Mesh;
+    private arms02:THREE.Mesh;
+    private arms03:THREE.Mesh;
+
+    private arms_materials:any[] = [];
+
+    private gui:GUI;
+
 
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
+        this.gui = gui;
         this.createScene();
+
 
         console.log("scene created!")
     }
@@ -37,8 +47,8 @@ export default class Scene03{
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
         // カメラ位置を設定
-        this.camera.position.z = 5;
-        this.camera.position.y = 5;
+        this.camera.position.z = 2;
+        this.camera.position.y = 2;
         this.camera.lookAt( new THREE.Vector3(0,5,-5));
         this.scene.add(new THREE.AmbientLight(0xffffff));
 
@@ -77,43 +87,61 @@ export default class Scene03{
         THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
         var mtlLoader = new THREE.MTLLoader();
         mtlLoader.setPath( 'models/Venus/' );
-        mtlLoader.load( 'Venus.mtl', ( materials )=> {
+        mtlLoader.load( 'Venus_booled.mtl', ( materials )=> {
             materials.preload();
             var objLoader = new THREE.OBJLoader();
+
             objLoader.setMaterials( materials );
             objLoader.setPath( 'models/Venus/' );
-            objLoader.load( 'Venus.obj', ( object )=> {
+            objLoader.load( 'Venus_booled.obj', ( object )=> {
                 // object.position.y = - 95;
-                object.scale.set(0.3,0.3,0.3);
+                // object.scale.set(0.3,0.3,0.3);
                 this.scene.add( object );
             }, onProgress, onError );
         });
 
-        // var loader = new THREE.ColladaLoader();
-        // loader.load( './models/oporalep/power.dae', ( collada )=> {
-        //     var object = collada.scene;
-        //     console.log(object);
-        //     // object.position.y = -1;
-        //     // object.position.x = 0;
-        //
-        //     object.rotation.y = Math.PI;
-        //     // this.pal_objects.push(object);
-        //     console.log("oporalep");
-        //     console.log(object);
-        //
-        //     this.scene.add( object );
-        // });
-        //
-        // var manager = new THREE.LoadingManager();
-        // manager.onProgress = function( item, loaded, total ) {
-        //     console.log( item, loaded, total );
-        // };
-        //
-        // var loader = new THREE.FBXLoader( manager );
-        //
-        // loader.load( 'models/oporalep/oporalep broken.fbx', ( object )=> {
-        //     this.scene.add( object );
-        // }, onProgress, onError );
+
+        mtlLoader.load( 'arms_zeus.mtl', ( materials )=> {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            this.arms_materials.push(materials);
+            objLoader.setPath( 'models/Venus/' );
+            objLoader.load( 'arms_zeus.obj', ( object )=> {
+
+                // object.position.set(5,0,0);
+                console.log(object);
+                this.arms01 = object;
+                this.scene.add( object );
+
+                mtlLoader.load( 'arms_doryphoros.mtl', ( materials )=> {
+                    materials.preload();
+                    var objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials( materials );
+                    this.arms_materials.push(materials);
+                    objLoader.setPath( 'models/Venus/' );
+                    objLoader.load( 'arms_doryphoros.obj', ( object )=> {
+                        this.arms02 = object;
+                        console.log(object);
+                        this.scene.add( object );
+
+                        mtlLoader.load( 'arms_mars.mtl', ( materials )=> {
+                            materials.preload();
+                            var objLoader = new THREE.OBJLoader();
+                            objLoader.setMaterials( materials );
+                            this.arms_materials.push(materials);
+                            objLoader.setPath( 'models/Venus/' );
+                            objLoader.load( 'arms_mars.obj', ( object )=> {
+                                this.arms03 = object;
+                                console.log(object);
+                                this.scene.add( object );
+                            }, onProgress, onError );
+                        });
+                    }, onProgress, onError );
+                });
+
+            }, onProgress, onError );
+        });
 
 
 
@@ -139,6 +167,20 @@ export default class Scene03{
     public click()
     {
 
+        console.log(this.arms_materials.length);
+       for(let i = 0; i < this.arms_materials.length; i++)
+       {
+           let armmaterials = this.arms_materials[i];
+           // this.arms_materials[i].materials[i].wireframe = true;
+           console.log(armmaterials.materials);
+           for(let j = 0; j < this.arms_materials[i].materials.length; j++)
+           {
+
+               let mat = this.arms_materials[i].materials[j];
+               console.log(mat);
+               mat.wireframe = !mat.wireframe;
+           }
+       }
     }
 
     // ******************************************************
@@ -169,6 +211,10 @@ export default class Scene03{
     // ******************************************************
     public update(time)
     {
+
+        this.arms01 = this.gui.scene03.arms01;
+        this.arms02 = this.gui.scene03.arms02;
+        this.arms03 = this.gui.scene03.arms03;
 
         this.cube.rotation.x += 0.1;
         this.cube.rotation.y += 0.1;

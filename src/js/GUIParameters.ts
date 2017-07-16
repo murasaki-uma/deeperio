@@ -2,6 +2,10 @@ export default class GUIParameters
 {
 
     public threshold:number = 20;
+    public drawArms01:boolean = true;
+    public drawArms02:boolean = true;
+    public drawArms03:boolean = true;
+
     // public particleSpeed:number = 0.3;
     // public radiusSpeed:number = 0.1;
     // public particleMaxRad:number = 3000;

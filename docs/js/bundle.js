@@ -9908,11 +9908,15 @@ var GUI = (function () {
         // this.gui.remember();
         this.gui.remember(this.parameters);
         this.rendering = this.gui.addFolder('animation');
+        this.scene03 = this.gui.addFolder("scene03");
         // this.camera = this.gui.addFolder('camera');
         this.init();
     }
     GUI.prototype.init = function () {
         this.rendering.add(this.parameters, 'threshold', -30.0, 30.0);
+        this.scene03.add(this.parameters, "drawArms01", true);
+        this.scene03.add(this.parameters, "drawArms02", true);
+        this.scene03.add(this.parameters, "drawArms03", true);
     };
     return GUI;
 }());
@@ -10257,7 +10261,9 @@ var Scene02 = (function () {
 var Scene03 = (function () {
     // ******************************************************
     function Scene03(renderer, gui) {
+        this.arms_materials = [];
         this.renderer = renderer;
+        this.gui = gui;
         this.createScene();
         console.log("scene created!");
     }
@@ -10276,8 +10282,8 @@ var Scene03 = (function () {
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
-        this.camera.position.z = 5;
-        this.camera.position.y = 5;
+        this.camera.position.z = 2;
+        this.camera.position.y = 2;
         this.camera.lookAt(new THREE.Vector3(0, 5, -5));
         this.scene.add(new THREE.AmbientLight(0xffffff));
         var gridhelper = new THREE.GridHelper(10, 10, 0xFF7F00, 0x7F00FF);
@@ -10307,42 +10313,54 @@ var Scene03 = (function () {
         THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
         var mtlLoader = new THREE.MTLLoader();
         mtlLoader.setPath('models/Venus/');
-        mtlLoader.load('Venus.mtl', function (materials) {
+        mtlLoader.load('Venus_booled.mtl', function (materials) {
             materials.preload();
             var objLoader = new THREE.OBJLoader();
             objLoader.setMaterials(materials);
             objLoader.setPath('models/Venus/');
-            objLoader.load('Venus.obj', function (object) {
+            objLoader.load('Venus_booled.obj', function (object) {
                 // object.position.y = - 95;
-                object.scale.set(0.3, 0.3, 0.3);
+                // object.scale.set(0.3,0.3,0.3);
                 _this.scene.add(object);
             }, onProgress, onError);
         });
-        // var loader = new THREE.ColladaLoader();
-        // loader.load( './models/oporalep/power.dae', ( collada )=> {
-        //     var object = collada.scene;
-        //     console.log(object);
-        //     // object.position.y = -1;
-        //     // object.position.x = 0;
-        //
-        //     object.rotation.y = Math.PI;
-        //     // this.pal_objects.push(object);
-        //     console.log("oporalep");
-        //     console.log(object);
-        //
-        //     this.scene.add( object );
-        // });
-        //
-        // var manager = new THREE.LoadingManager();
-        // manager.onProgress = function( item, loaded, total ) {
-        //     console.log( item, loaded, total );
-        // };
-        //
-        // var loader = new THREE.FBXLoader( manager );
-        //
-        // loader.load( 'models/oporalep/oporalep broken.fbx', ( object )=> {
-        //     this.scene.add( object );
-        // }, onProgress, onError );
+        mtlLoader.load('arms_zeus.mtl', function (materials) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            _this.arms_materials.push(materials);
+            objLoader.setPath('models/Venus/');
+            objLoader.load('arms_zeus.obj', function (object) {
+                // object.position.set(5,0,0);
+                console.log(object);
+                _this.arms01 = object;
+                _this.scene.add(object);
+                mtlLoader.load('arms_doryphoros.mtl', function (materials) {
+                    materials.preload();
+                    var objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials(materials);
+                    _this.arms_materials.push(materials);
+                    objLoader.setPath('models/Venus/');
+                    objLoader.load('arms_doryphoros.obj', function (object) {
+                        _this.arms02 = object;
+                        console.log(object);
+                        _this.scene.add(object);
+                        mtlLoader.load('arms_mars.mtl', function (materials) {
+                            materials.preload();
+                            var objLoader = new THREE.OBJLoader();
+                            objLoader.setMaterials(materials);
+                            _this.arms_materials.push(materials);
+                            objLoader.setPath('models/Venus/');
+                            objLoader.load('arms_mars.obj', function (object) {
+                                _this.arms03 = object;
+                                console.log(object);
+                                _this.scene.add(object);
+                            }, onProgress, onError);
+                        });
+                    }, onProgress, onError);
+                });
+            }, onProgress, onError);
+        });
     };
     Scene03.prototype.createSpotlight = function (color) {
         var newObj = new THREE.SpotLight(color, 0.3);
@@ -10357,6 +10375,17 @@ var Scene03 = (function () {
     };
     // ******************************************************
     Scene03.prototype.click = function () {
+        console.log(this.arms_materials.length);
+        for (var i = 0; i < this.arms_materials.length; i++) {
+            var armmaterials = this.arms_materials[i];
+            // this.arms_materials[i].materials[i].wireframe = true;
+            console.log(armmaterials.materials);
+            for (var j = 0; j < this.arms_materials[i].materials.length; j++) {
+                var mat = this.arms_materials[i].materials[j];
+                console.log(mat);
+                mat.wireframe = !mat.wireframe;
+            }
+        }
     };
     // ******************************************************
     Scene03.prototype.keyUp = function (e) {
@@ -10372,6 +10401,9 @@ var Scene03 = (function () {
     };
     // ******************************************************
     Scene03.prototype.update = function (time) {
+        this.arms01 = this.gui.scene03.arms01;
+        this.arms02 = this.gui.scene03.arms02;
+        this.arms03 = this.gui.scene03.arms03;
         this.cube.rotation.x += 0.1;
         this.cube.rotation.y += 0.1;
     };
@@ -26797,6 +26829,9 @@ Object.defineProperties( THREE.OrbitControls.prototype, {
 var GUIParameters = (function () {
     function GUIParameters() {
         this.threshold = 20;
+        this.drawArms01 = true;
+        this.drawArms02 = true;
+        this.drawArms03 = true;
         // public particleSpeed:number = 0.3;
         // public radiusSpeed:number = 0.1;
         // public particleMaxRad:number = 3000;
