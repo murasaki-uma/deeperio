@@ -2,7 +2,7 @@ import GUI from "./GUI";
 
 
 // *********** ひとつめのシーン *********** //
-export default class SceneTemplatetransparent{
+export default class Scene01{
 
     public scene: THREE.Scene;
     public camera: THREE.Camera;

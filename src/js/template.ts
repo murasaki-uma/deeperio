@@ -9,7 +9,6 @@ export default class SceneTemplate{
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
 
-    private mesh_parking_materials:THREE.Material[] = [];
 
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer) {

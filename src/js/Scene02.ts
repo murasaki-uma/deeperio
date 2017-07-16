@@ -22,7 +22,7 @@ class WireBox{
 
     }
 }
-export default class SceneTemplate{
+export default class Scene02{
 
     public scene: THREE.Scene;
     public camera: THREE.Camera;
