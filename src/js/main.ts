@@ -5,6 +5,7 @@ import Template from "./template";
 import Scene01 from "./Scene01";
 import Scene02 from "./Scene02";
 import Scene03 from "./Scene03";
+import Scene04 from "./Scene04";
 import VThree from "./VThree";
 import GUI from "./GUI";
 import "./loaders/MTLLoader.js";
@@ -14,7 +15,6 @@ import "./loaders/FBXLoader.js";
 import "./loaders/ColladaLoader.js";
 import "./GPUComputationRenderer.js";
 import Scene = THREE.Scene;
-// const io = require('socket.io');
 
 class Main
 {
@@ -23,6 +23,7 @@ class Main
     public scene01:Scene01;
     public scene02:Scene02;
     public scene03:Scene03;
+    public scene04:Scene04;
     public socket:any;
 
     public gui:GUI = new GUI();
@@ -42,9 +43,10 @@ class Main
                 this.scene01 = new Scene01(this.vthree.renderer,this.gui);
                 this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 this.scene03 = new Scene03(this.vthree.renderer,this.gui);
-                // this.vthree.addScene(this.scene01);
-                // this.vthree.addScene(this.scene02);
-                this.vthree.addScene(this.scene03);
+                this.scene04 = new Scene04(this.vthree.renderer,this.gui);
+                this.vthree.addScene(this.scene01);
+                this.vthree.addScene(this.scene02);
+                this.vthree.addScene(this.scene04);
                 this.vthree.draw();
 
                 this.vthree.isUpdate = true;

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 18);
+/******/ 	return __webpack_require__(__webpack_require__.s = 19);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -9892,8 +9892,8 @@ return jQuery;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(13);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_dat_gui__);
 
 
@@ -10417,11 +10417,264 @@ var Scene03 = (function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+var GPUParticle = (function () {
+    function GPUParticle(_scene, _renderer, _camera, _width) {
+        // 500 * 500 = 250000
+        this.WIDTH = 500;
+        this.scene = _scene;
+        this.renderer = _renderer;
+        this.camera = _camera;
+        this.WIDTH = _width;
+        this.initComputeRenderer();
+        this.initPosition();
+    }
+    GPUParticle.prototype.initComputeRenderer = function () {
+        this.PARTICLES = this.WIDTH * this.WIDTH;
+        this.gpuCompute = new GPUComputationRenderer(this.WIDTH, this.WIDTH, this.renderer);
+        var dtPosition = this.gpuCompute.createTexture();
+        var dtVelocity = this.gpuCompute.createTexture();
+        this.fillTextures(dtPosition, dtVelocity);
+        // shaderプログラムのアタッチ
+        this.velocityVariable = this.gpuCompute.addVariable("textureParticleVelocity", document.getElementById('computeParticleVelocity').textContent, dtVelocity);
+        this.positionVariable = this.gpuCompute.addVariable("textureParticlePosition", document.getElementById('computeParticlePosition').textContent, dtPosition);
+        this.gpuCompute.setVariableDependencies(this.velocityVariable, [this.positionVariable, this.velocityVariable]);
+        this.gpuCompute.setVariableDependencies(this.positionVariable, [this.positionVariable, this.velocityVariable]);
+        // uniform変数を登録したい場合は以下のように作る
+        /*
+         positionUniforms = positionVariable.material.uniforms;
+         velocityUniforms = velocityVariable.material.uniforms;
+
+         velocityUniforms.time = { value: 0.0 };
+         positionUniforms.time = { ValueB: 0.0 };
+         ***********************************
+         たとえば、上でコメントアウトしているeffectControllerオブジェクトのtimeを
+         わたしてあげれば、effectController.timeを更新すればuniform変数も変わったり、ということができる
+         velocityUniforms.time = { value: effectController.time };
+         ************************************
+         */
+        // error処理
+        var error = this.gpuCompute.init();
+        if (error !== null) {
+            console.error(error);
+        }
+    };
+    GPUParticle.prototype.restartSimulation = function () {
+        var dtPosition = this.gpuCompute.createTexture();
+        var dtVelocity = this.gpuCompute.createTexture();
+        this.fillTextures(dtPosition, dtVelocity);
+        this.gpuCompute.renderTexture(dtPosition, this.positionVariable.renderTargets[0]);
+        this.gpuCompute.renderTexture(dtPosition, this.positionVariable.renderTargets[1]);
+        this.gpuCompute.renderTexture(dtVelocity, this.velocityVariable.renderTargets[0]);
+        this.gpuCompute.renderTexture(dtVelocity, this.velocityVariable.renderTargets[1]);
+    };
+    GPUParticle.prototype.initPosition = function () {
+        this.geometry = new THREE.BufferGeometry();
+        var positions = new Float32Array(this.PARTICLES * 3);
+        var p = 0;
+        for (var i = 0; i < this.PARTICLES; i++) {
+            positions[p++] = 0;
+            positions[p++] = 0;
+            positions[p++] = 0;
+        }
+        // uv情報の決定。テクスチャから情報を取り出すときに必要
+        var uvs = new Float32Array(this.PARTICLES * 2);
+        p = 0;
+        for (var j = 0; j < this.WIDTH; j++) {
+            for (var i = 0; i < this.WIDTH; i++) {
+                uvs[p++] = i / (this.WIDTH - 1);
+                uvs[p++] = j / (this.WIDTH - 1);
+            }
+        }
+        // attributeをgeometryに登録する
+        this.geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        // uniform変数をオブジェクトで定義
+        // 今回はカメラをマウスでいじれるように、計算に必要な情報もわたす。
+        this.particleUniforms = {
+            textureParticlePosition: { value: null },
+            textureParticleVelocity: { value: null },
+            cameraConstant: { value: this.getCameraConstant() }
+        };
+        // Shaderマテリアル これはパーティクルそのものの描写に必要なシェーダー
+        var material = new THREE.ShaderMaterial({
+            uniforms: this.particleUniforms,
+            vertexShader: document.getElementById('particleVertexShader').textContent,
+            fragmentShader: document.getElementById('particleFragmentShader').textContent
+        });
+        material.extensions.drawBuffers = true;
+        var particles = new THREE.Points(this.geometry, material);
+        particles.matrixAutoUpdate = false;
+        particles.updateMatrix();
+        // パーティクルをシーンに追加
+        this.scene.add(particles);
+    };
+    GPUParticle.prototype.fillTextures = function (texturePosition, textureVelocity) {
+        // textureのイメージデータをいったん取り出す
+        var posArray = texturePosition.image.data;
+        var velArray = textureVelocity.image.data;
+        // パーティクルの初期の位置は、ランダムなXZに平面おく。
+        // 板状の正方形が描かれる
+        var k, kl;
+        for (k = 0, kl = posArray.length; k < kl; k += 4) {
+            // Position
+            var x = void 0, y = void 0, z = void 0;
+            x = Math.random() * 500 - 250;
+            z = Math.random() * 500 - 250;
+            y = 0;
+            // posArrayの実態は一次元配列なので
+            // x,y,z,wの順番に埋めていく。
+            // wは今回は使用しないが、配列の順番などを埋めておくといろいろ使えて便利
+            posArray[k + 0] = x;
+            posArray[k + 1] = y;
+            posArray[k + 2] = z;
+            posArray[k + 3] = 0;
+            // 移動する方向はとりあえずランダムに決めてみる。
+            // これでランダムな方向にとぶパーティクルが出来上がるはず。
+            velArray[k + 0] = Math.random() * 2 - 1;
+            velArray[k + 1] = Math.random() * 2 - 1;
+            velArray[k + 2] = Math.random() * 2 - 1;
+            velArray[k + 3] = Math.random() * 2 - 1;
+        }
+    };
+    GPUParticle.prototype.getCameraConstant = function () {
+        return window.innerHeight / (Math.tan(THREE.Math.DEG2RAD * 0.5 * this.camera.fov) / this.camera.zoom);
+    };
+    GPUParticle.prototype.update = function () {
+        this.gpuCompute.compute();
+        this.particleUniforms.textureParticlePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
+        this.particleUniforms.textureParticleVelocity.value = this.gpuCompute.getCurrentRenderTarget(this.velocityVariable).texture;
+    };
+    return GPUParticle;
+}());
+var Scene03 = (function () {
+    // ******************************************************
+    function Scene03(renderer, gui) {
+        this.arms_materials = [];
+        this.renderer = renderer;
+        this.gui = gui;
+        this.createScene();
+        this.gpuParticle = new GPUParticle(this.scene, this.renderer, this.camera, 100);
+        console.log("scene created!");
+    }
+    // ******************************************************
+    Scene03.prototype.createScene = function () {
+        var _this = this;
+        this.scene = new THREE.Scene();
+        // 立方体のジオメトリーを作成
+        this.geometry = new THREE.BoxGeometry(1, 1, 1);
+        // 緑のマテリアルを作成
+        this.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.cube = new THREE.Mesh(this.geometry, this.material);
+        // メッシュをシーンに追加
+        // this.scene.add( this.cube );
+        // カメラを作成
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // カメラ位置を設定
+        this.camera.position.z = 2;
+        this.camera.position.y = 2;
+        this.camera.lookAt(new THREE.Vector3(0, 5, -5));
+        this.scene.add(new THREE.AmbientLight(0xffffff));
+        var gridhelper = new THREE.GridHelper(10, 10, 0xFF7F00, 0x7F00FF);
+        this.scene.add(gridhelper);
+        var onProgress = function (xhr) {
+            if (xhr.lengthComputable) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
+            }
+        };
+        var dlight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dlight.position.set(0, 1, 1);
+        var spotLight1 = this.createSpotlight(0xffffff);
+        var spotLight2 = this.createSpotlight(0xffffff);
+        spotLight1.position.set(-15, -4, 0);
+        spotLight2.position.set(15, -4, 0);
+        spotLight1.target.position.set(0, 50, 0);
+        spotLight2.target.position.set(0, 50, 0);
+        this.scene.add(spotLight1);
+        this.scene.add(spotLight2);
+        this.scene.add(dlight);
+        var lightHelper1 = new THREE.SpotLightHelper(spotLight1);
+        var lightHelper2 = new THREE.SpotLightHelper(spotLight2);
+        this.scene.add(lightHelper1);
+        this.scene.add(lightHelper2);
+        var onError = function (xhr) { };
+        THREE.Loader.Handlers.add(/\.dds$/i, new THREE.DDSLoader());
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setPath('models/Venus/');
+        mtlLoader.load('Venus_booled.mtl', function (materials) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.setPath('models/Venus/');
+            objLoader.load('Venus_booled.obj', function (object) {
+                // object.position.y = - 95;
+                // object.scale.set(0.3,0.3,0.3);
+                _this.scene.add(object);
+            }, onProgress, onError);
+        });
+    };
+    Scene03.prototype.createSpotlight = function (color) {
+        var newObj = new THREE.SpotLight(color, 0.3);
+        newObj.castShadow = true;
+        newObj.angle = 0.3;
+        newObj.penumbra = 0.2;
+        newObj.decay = 2;
+        newObj.distance = 20;
+        newObj.shadow.mapSize.width = 1024;
+        newObj.shadow.mapSize.height = 1024;
+        return newObj;
+    };
+    // ******************************************************
+    Scene03.prototype.click = function () {
+        console.log(this.arms_materials.length);
+        for (var i = 0; i < this.arms_materials.length; i++) {
+            var armmaterials = this.arms_materials[i];
+            // this.arms_materials[i].materials[i].wireframe = true;
+            console.log(armmaterials.materials);
+            for (var j = 0; j < this.arms_materials[i].materials.length; j++) {
+                var mat = this.arms_materials[i].materials[j];
+                console.log(mat);
+                mat.wireframe = !mat.wireframe;
+            }
+        }
+    };
+    // ******************************************************
+    Scene03.prototype.keyUp = function (e) {
+    };
+    // ******************************************************
+    Scene03.prototype.mouseMove = function (e) {
+    };
+    // ******************************************************
+    Scene03.prototype.keyDown = function (e) {
+    };
+    // ******************************************************
+    Scene03.prototype.onMouseDown = function (e) {
+    };
+    // ******************************************************
+    Scene03.prototype.update = function (time) {
+        this.arms01 = this.gui.scene03.arms01;
+        this.arms02 = this.gui.scene03.arms02;
+        this.arms03 = this.gui.scene03.arms03;
+        this.gpuParticle.update();
+        this.cube.rotation.x += 0.1;
+        this.cube.rotation.y += 0.1;
+    };
+    return Scene03;
+}());
+/* harmony default export */ __webpack_exports__["a"] = (Scene03);
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(17);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__);
-var Stats = __webpack_require__(15);
+var Stats = __webpack_require__(16);
 
 
 var VThree = (function () {
@@ -10612,7 +10865,7 @@ var VThree = (function () {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports) {
 
 /**
@@ -10988,7 +11241,7 @@ function GPUComputationRenderer( sizeX, sizeY, renderer ) {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 /**
@@ -16539,7 +16792,7 @@ THREE.ColladaLoader = function () {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports) {
 
 /*
@@ -16814,7 +17067,7 @@ THREE.DDSLoader.parse = function ( buffer, loadMipmaps ) {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 /**
@@ -20061,7 +20314,7 @@ THREE.DDSLoader.parse = function ( buffer, loadMipmaps ) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 /**
@@ -20607,7 +20860,7 @@ THREE.MTLLoader.MaterialCreator.prototype = {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 /**
@@ -21356,14 +21609,14 @@ THREE.OBJLoader.prototype = {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(14)
-module.exports.color = __webpack_require__(13)
+module.exports = __webpack_require__(15)
+module.exports.color = __webpack_require__(14)
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports) {
 
 /**
@@ -22123,7 +22376,7 @@ dat.color.toString,
 dat.utils.common);
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 /**
@@ -25788,7 +26041,7 @@ dat.dom.dom,
 dat.utils.common);
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 // stats.js - http://github.com/mrdoob/stats.js
@@ -25800,7 +26053,7 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 /**
@@ -26822,7 +27075,7 @@ Object.defineProperties( THREE.OrbitControls.prototype, {
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26862,7 +27115,7 @@ var GUIParameters = (function () {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26872,20 +27125,21 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene01__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Scene02__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Scene03__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__VThree__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__GUI__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__loaders_MTLLoader_js__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__loaders_MTLLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__loaders_MTLLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_DDSLoader_js__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_DDSLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__loaders_DDSLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_OBJLoader_js__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_OBJLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__loaders_OBJLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_FBXLoader_js__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_FBXLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__loaders_FBXLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_ColladaLoader_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_ColladaLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__loaders_ColladaLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__GPUComputationRenderer_js__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__GPUComputationRenderer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__GPUComputationRenderer_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Scene04__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__VThree__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__GUI__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js__);
 
 
 
@@ -26899,21 +27153,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 
-// const io = require('socket.io');
+
 var Main = (function () {
     function Main(num) {
         // URLのアンカー（#以降の部分）を取得
         var _this = this;
-        this.gui = new __WEBPACK_IMPORTED_MODULE_5__GUI__["a" /* default */]();
+        this.gui = new __WEBPACK_IMPORTED_MODULE_6__GUI__["a" /* default */]();
         __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/vthree.config.json", function (config) {
             __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/guisetting.json", function (data) {
-                _this.vthree = new __WEBPACK_IMPORTED_MODULE_4__VThree__["a" /* default */](1.0, false, config);
+                _this.vthree = new __WEBPACK_IMPORTED_MODULE_5__VThree__["a" /* default */](1.0, false, config);
                 _this.scene01 = new __WEBPACK_IMPORTED_MODULE_1__Scene01__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene02 = new __WEBPACK_IMPORTED_MODULE_2__Scene02__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene03 = new __WEBPACK_IMPORTED_MODULE_3__Scene03__["a" /* default */](_this.vthree.renderer, _this.gui);
-                // this.vthree.addScene(this.scene01);
-                // this.vthree.addScene(this.scene02);
-                _this.vthree.addScene(_this.scene03);
+                _this.scene04 = new __WEBPACK_IMPORTED_MODULE_4__Scene04__["a" /* default */](_this.vthree.renderer, _this.gui);
+                _this.vthree.addScene(_this.scene01);
+                _this.vthree.addScene(_this.scene02);
+                _this.vthree.addScene(_this.scene04);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続
