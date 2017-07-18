@@ -6,6 +6,10 @@ export default class GUIParameters
     public drawArms02:boolean = true;
     public drawArms03:boolean = true;
 
+    public particleStartX:number = 0.1;
+    public particleStartY:number = 0.1;
+    public particleStartZ:number = 0.1;
+
     // public particleSpeed:number = 0.3;
     // public radiusSpeed:number = 0.1;
     // public particleMaxRad:number = 3000;

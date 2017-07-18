@@ -9909,6 +9909,7 @@ var GUI = (function () {
         this.gui.remember(this.parameters);
         this.rendering = this.gui.addFolder('animation');
         this.scene03 = this.gui.addFolder("scene03");
+        this.particle = this.gui.addFolder("particle");
         // this.camera = this.gui.addFolder('camera');
         this.init();
     }
@@ -9917,6 +9918,9 @@ var GUI = (function () {
         this.scene03.add(this.parameters, "drawArms01", true);
         this.scene03.add(this.parameters, "drawArms02", true);
         this.scene03.add(this.parameters, "drawArms03", true);
+        this.particle.add(this.parameters, "particleStartX", -3.0, 3.0);
+        this.particle.add(this.parameters, "particleStartY", -5.0, 5.0);
+        this.particle.add(this.parameters, "particleStartZ", -1.0, 1.0);
     };
     return GUI;
 }());
@@ -10457,6 +10461,7 @@ var GPUParticle = (function () {
         if (error !== null) {
             console.error(error);
         }
+        // this.update();
     };
     GPUParticle.prototype.restartSimulation = function () {
         var dtPosition = this.gpuCompute.createTexture();
@@ -10469,12 +10474,12 @@ var GPUParticle = (function () {
     };
     GPUParticle.prototype.initPosition = function () {
         this.geometry = new THREE.BufferGeometry();
-        var positions = new Float32Array(this.PARTICLES * 3);
+        this.startPositions = new Float32Array(this.PARTICLES * 3);
         var p = 0;
         for (var i = 0; i < this.PARTICLES; i++) {
-            positions[p++] = 0;
-            positions[p++] = 0;
-            positions[p++] = 0;
+            this.startPositions[p++] = 0;
+            this.startPositions[p++] = 0;
+            this.startPositions[p++] = 0;
         }
         // uv情報の決定。テクスチャから情報を取り出すときに必要
         var uvs = new Float32Array(this.PARTICLES * 2);
@@ -10486,7 +10491,7 @@ var GPUParticle = (function () {
             }
         }
         // attributeをgeometryに登録する
-        this.geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.addAttribute('position', new THREE.BufferAttribute(this.startPositions, 3));
         this.geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
         // uniform変数をオブジェクトで定義
         // 今回はカメラをマウスでいじれるように、計算に必要な情報もわたす。
@@ -10505,6 +10510,7 @@ var GPUParticle = (function () {
         var particles = new THREE.Points(this.geometry, material);
         particles.matrixAutoUpdate = false;
         particles.updateMatrix();
+        particles.frustumCulled = false;
         // パーティクルをシーンに追加
         this.scene.add(particles);
     };
@@ -10514,26 +10520,28 @@ var GPUParticle = (function () {
         var velArray = textureVelocity.image.data;
         // パーティクルの初期の位置は、ランダムなXZに平面おく。
         // 板状の正方形が描かれる
-        var k, kl;
+        var k, kl, p;
+        p = 0;
+        var startPos = new THREE.Vector3(0.24, 1.1, 0);
         for (k = 0, kl = posArray.length; k < kl; k += 4) {
             // Position
             var x = void 0, y = void 0, z = void 0;
-            x = Math.random() * 500 - 250;
-            z = Math.random() * 500 - 250;
-            y = 0;
+            x = startPos.x + Math.random() * 0.1 - 0.05;
+            y = startPos.y + Math.random() * 0.1 - 0.05;
+            z = startPos.z + Math.random() * 0.1 - 0.05;
             // posArrayの実態は一次元配列なので
             // x,y,z,wの順番に埋めていく。
             // wは今回は使用しないが、配列の順番などを埋めておくといろいろ使えて便利
             posArray[k + 0] = x;
             posArray[k + 1] = y;
             posArray[k + 2] = z;
-            posArray[k + 3] = 0;
+            posArray[k + 3] = Math.random();
             // 移動する方向はとりあえずランダムに決めてみる。
             // これでランダムな方向にとぶパーティクルが出来上がるはず。
-            velArray[k + 0] = Math.random() * 2 - 1;
+            velArray[k + 0] = Math.random();
             velArray[k + 1] = Math.random() * 2 - 1;
             velArray[k + 2] = Math.random() * 2 - 1;
-            velArray[k + 3] = Math.random() * 2 - 1;
+            velArray[k + 3] = Math.random();
         }
     };
     GPUParticle.prototype.getCameraConstant = function () {
@@ -10550,10 +10558,11 @@ var Scene03 = (function () {
     // ******************************************************
     function Scene03(renderer, gui) {
         this.arms_materials = [];
+        this.isUpdate = false;
         this.renderer = renderer;
         this.gui = gui;
         this.createScene();
-        this.gpuParticle = new GPUParticle(this.scene, this.renderer, this.camera, 100);
+        this.gpuParticle = new GPUParticle(this.scene, this.renderer, this.camera, 50);
         console.log("scene created!");
     }
     // ******************************************************
@@ -10561,13 +10570,13 @@ var Scene03 = (function () {
         var _this = this;
         this.scene = new THREE.Scene();
         // 立方体のジオメトリーを作成
-        this.geometry = new THREE.BoxGeometry(1, 1, 1);
+        this.geometry = new THREE.BoxGeometry(0.05, 0.05, 0.05);
         // 緑のマテリアルを作成
         this.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.cube = new THREE.Mesh(this.geometry, this.material);
         // メッシュをシーンに追加
-        // this.scene.add( this.cube );
+        this.scene.add(this.cube);
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
@@ -10611,6 +10620,8 @@ var Scene03 = (function () {
                 // object.position.y = - 95;
                 // object.scale.set(0.3,0.3,0.3);
                 _this.scene.add(object);
+                _this.isUpdate = true;
+                _this.gpuParticle.update();
             }, onProgress, onError);
         });
     };
@@ -10653,12 +10664,15 @@ var Scene03 = (function () {
     };
     // ******************************************************
     Scene03.prototype.update = function (time) {
-        this.arms01 = this.gui.scene03.arms01;
-        this.arms02 = this.gui.scene03.arms02;
-        this.arms03 = this.gui.scene03.arms03;
-        this.gpuParticle.update();
-        this.cube.rotation.x += 0.1;
-        this.cube.rotation.y += 0.1;
+        if (this.isUpdate) {
+            this.arms01 = this.gui.scene03.arms01;
+            this.arms02 = this.gui.scene03.arms02;
+            this.arms03 = this.gui.scene03.arms03;
+            this.gpuParticle.update();
+            // this.cube.rotation.x += 0.1;
+            // this.cube.rotation.y += 0.1;
+            this.cube.position.set(this.gui.parameters.particleStartX, this.gui.parameters.particleStartY, this.gui.parameters.particleStartZ);
+        }
     };
     return Scene03;
 }());
@@ -27085,6 +27099,9 @@ var GUIParameters = (function () {
         this.drawArms01 = true;
         this.drawArms02 = true;
         this.drawArms03 = true;
+        this.particleStartX = 0.1;
+        this.particleStartY = 0.1;
+        this.particleStartZ = 0.1;
         // public particleSpeed:number = 0.3;
         // public radiusSpeed:number = 0.1;
         // public particleMaxRad:number = 3000;
@@ -27166,8 +27183,8 @@ var Main = (function () {
                 _this.scene02 = new __WEBPACK_IMPORTED_MODULE_2__Scene02__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene03 = new __WEBPACK_IMPORTED_MODULE_3__Scene03__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene04 = new __WEBPACK_IMPORTED_MODULE_4__Scene04__["a" /* default */](_this.vthree.renderer, _this.gui);
-                _this.vthree.addScene(_this.scene01);
-                _this.vthree.addScene(_this.scene02);
+                // this.vthree.addScene(this.scene01);
+                // this.vthree.addScene(this.scene02);
                 _this.vthree.addScene(_this.scene04);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;

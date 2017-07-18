@@ -5,6 +5,7 @@ export default class GUI
     public gui:dat.GUI;
     public parameters:GUIParameters;
     public rendering:any;
+    public particle:any;
     public scene03:any;
     // public camera:any;
     constructor ()
@@ -23,6 +24,7 @@ export default class GUI
 
         this.rendering = this.gui.addFolder('animation');
         this.scene03 = this.gui.addFolder("scene03");
+        this.particle = this.gui.addFolder("particle");
 
         // this.camera = this.gui.addFolder('camera');
 
@@ -37,6 +39,9 @@ export default class GUI
         this.scene03.add(this.parameters,"drawArms02",true);
         this.scene03.add(this.parameters,"drawArms03",true);
 
+        this.particle.add(this.parameters,"particleStartX",-3.0,3.0);
+        this.particle.add(this.parameters,"particleStartY",-5.0,5.0);
+        this.particle.add(this.parameters,"particleStartZ",-1.0,1.0);
     }
 
 

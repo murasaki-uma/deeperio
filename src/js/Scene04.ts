@@ -23,6 +23,8 @@ class GPUParticle {
     private particleUniforms: any;
     private effectController: any;
 
+    private startPositions:Float32Array;
+
     constructor(_scene: THREE.Scene, _renderer: THREE.WebGLRenderer, _camera:THREE.PerspectiveCamera, _width: number) {
         this.scene = _scene;
         this.renderer = _renderer;
@@ -68,6 +70,7 @@ class GPUParticle {
             console.error(error);
         }
 
+        // this.update();
     }
     public restartSimulation() {
         let dtPosition = this.gpuCompute.createTexture();
@@ -81,13 +84,14 @@ class GPUParticle {
 
     public initPosition() {
 
+
         this.geometry = new THREE.BufferGeometry();
-        let positions = new Float32Array( this.PARTICLES * 3 );
+        this.startPositions = new Float32Array( this.PARTICLES * 3 );
         let p = 0;
         for ( let i = 0; i < this.PARTICLES; i++ ) {
-            positions[ p++ ] = 0;
-            positions[ p++ ] = 0;
-            positions[ p++ ] = 0;
+            this.startPositions[ p++ ] = 0;
+            this.startPositions[ p++ ] = 0;
+            this.startPositions[ p++ ] = 0;
         }
 
         // uv情報の決定。テクスチャから情報を取り出すときに必要
@@ -101,7 +105,7 @@ class GPUParticle {
         }
 
         // attributeをgeometryに登録する
-        this.geometry.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+        this.geometry.addAttribute( 'position', new THREE.BufferAttribute( this.startPositions, 3 ) );
             this.geometry.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
 
         // uniform変数をオブジェクトで定義
@@ -125,6 +129,8 @@ class GPUParticle {
         let particles = new THREE.Points( this.geometry, material );
         particles.matrixAutoUpdate = false;
         particles.updateMatrix();
+        particles.frustumCulled = false;
+
 
         // パーティクルをシーンに追加
             this.scene.add( particles );
@@ -138,27 +144,31 @@ class GPUParticle {
 
         // パーティクルの初期の位置は、ランダムなXZに平面おく。
         // 板状の正方形が描かれる
-        let k, kl;
+        let k, kl,p;
+        p = 0;
+        let startPos = new THREE.Vector3(0.24, 1.1, 0);
         for ( k = 0, kl = posArray.length; k < kl; k += 4 ) {
             // Position
+
             let x, y, z;
-            x = Math.random()*500-250;
-            z = Math.random()*500-250;
-            y = 0;
+            x =startPos.x + Math.random()*0.1-0.05;
+            y =startPos.y + Math.random()*0.1-0.05;
+            z =startPos.z + Math.random()*0.1-0.05;
+
             // posArrayの実態は一次元配列なので
             // x,y,z,wの順番に埋めていく。
             // wは今回は使用しないが、配列の順番などを埋めておくといろいろ使えて便利
             posArray[ k + 0 ] = x;
             posArray[ k + 1 ] = y;
             posArray[ k + 2 ] = z;
-            posArray[ k + 3 ] = 0;
+            posArray[ k + 3 ] = Math.random();
 
             // 移動する方向はとりあえずランダムに決めてみる。
             // これでランダムな方向にとぶパーティクルが出来上がるはず。
-            velArray[ k + 0 ] = Math.random()*2-1;
+            velArray[ k + 0 ] = Math.random();
             velArray[ k + 1 ] = Math.random()*2-1;
             velArray[ k + 2 ] = Math.random()*2-1;
-            velArray[ k + 3 ] = Math.random()*2-1;
+            velArray[ k + 3 ] = Math.random();
         }
     }
     private getCameraConstant( ) {
@@ -192,6 +202,7 @@ export default class Scene03{
     private arms_materials:any[] = [];
     private gpuParticle:GPUParticle;
     private gui:GUI;
+    private isUpdate:boolean = false;
 
 
     // ******************************************************
@@ -199,24 +210,23 @@ export default class Scene03{
         this.renderer = renderer;
         this.gui = gui;
         this.createScene();
-        this.gpuParticle = new GPUParticle(this.scene,this.renderer,this.camera,100);
+        this.gpuParticle = new GPUParticle(this.scene,this.renderer,this.camera,50);
         console.log("scene created!")
     }
 
     // ******************************************************
     private createScene()
     {
-
         this.scene = new THREE.Scene();
 
         // 立方体のジオメトリーを作成
-        this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        this.geometry = new THREE.BoxGeometry( 0.05, 0.05, 0.05 );
         // 緑のマテリアルを作成
         this.material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.cube = new THREE.Mesh( this.geometry, this.material );
         // メッシュをシーンに追加
-        // this.scene.add( this.cube );
+        this.scene.add( this.cube );
 
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
@@ -271,6 +281,8 @@ export default class Scene03{
                 // object.position.y = - 95;
                 // object.scale.set(0.3,0.3,0.3);
                 this.scene.add( object );
+                this.isUpdate = true;
+                this.gpuParticle.update();
             }, onProgress, onError );
         });
 
@@ -342,13 +354,23 @@ export default class Scene03{
     public update(time)
     {
 
-        this.arms01 = this.gui.scene03.arms01;
-        this.arms02 = this.gui.scene03.arms02;
-        this.arms03 = this.gui.scene03.arms03;
+        if(this.isUpdate)
+        {
+            this.arms01 = this.gui.scene03.arms01;
+            this.arms02 = this.gui.scene03.arms02;
+            this.arms03 = this.gui.scene03.arms03;
 
-        this.gpuParticle.update();
-        this.cube.rotation.x += 0.1;
-        this.cube.rotation.y += 0.1;
+            this.gpuParticle.update();
+            // this.cube.rotation.x += 0.1;
+            // this.cube.rotation.y += 0.1;
+            this.cube.position.set(
+                this.gui.parameters.particleStartX,
+                this.gui.parameters.particleStartY,
+                this.gui.parameters.particleStartZ,
+            )
+        }
+
+
 
     }
 

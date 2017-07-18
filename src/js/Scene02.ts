@@ -47,6 +47,8 @@ export default class Scene02{
     private createScene()
     {
 
+
+
         this.uniforms ={
             time: {value: 1.0},
             texture: {value: null},
