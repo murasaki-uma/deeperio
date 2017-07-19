@@ -24,13 +24,11 @@ export default class Scene01{
     private TEXTURE_WIDTH:number = 320;
     private TEXTURE_HEIGHT:number = 320;
 
-
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
         this.createScene();
         this.gui = gui;
-
 
         console.log("scene created!")
     }
@@ -190,7 +188,7 @@ export default class Scene01{
     {
         // for(let i = 0; i < this.pal_objects.length; i++)
         // {
-        this.replaceShader_WireWave(this.pal_objects[0],0,true);
+        this.replaceShader_WireWave(this.pal_objects[0],0,false);
         this.replaceShader_WireWave(this.pal_objects[1],1,false);
         // }
 
@@ -224,13 +222,14 @@ export default class Scene01{
 
         this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
+        this.cube.scale.set(0,0,0);
         let timerStep:number = 0.004;
         for(let i = 0; i < this.uniforms.length; i++)
         {
             //console.log(this.uniforms[i]);
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget( this.positionVariable ).texture;
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = this.gui.parameters.threshold;
+            this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
 
         }
 

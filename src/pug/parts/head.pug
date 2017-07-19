@@ -171,7 +171,7 @@ script(id="vertex_pal" type="x-shader/x-vertex").
         float height = 0.0;
         if(d < 10.0)
         {
-            height =( 1.0-(d/10.0))*3.0 + 0.3;
+            height =( 1.0-(d/10.0))*60.0;
 
         }
 
@@ -183,10 +183,12 @@ script(id="vertex_pal" type="x-shader/x-vertex").
         p.y += sin(p.z+time)*0.3;
         p.x += sin(p.z*0.5+time)*noisex;
 
+        vec3 v = normalize(p);
+        v.z = 0.0;
 
+        //p.y += height;
 
-        p.y += height;
-        p+= tmpPos.xyz;
+        p+= tmpPos.xyz + v*height*noisey;
         vPos = p;
 
 

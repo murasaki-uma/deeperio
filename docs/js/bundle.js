@@ -10062,7 +10062,7 @@ var Scene01 = (function () {
     Scene01.prototype.click = function () {
         // for(let i = 0; i < this.pal_objects.length; i++)
         // {
-        this.replaceShader_WireWave(this.pal_objects[0], 0, true);
+        this.replaceShader_WireWave(this.pal_objects[0], 0, false);
         this.replaceShader_WireWave(this.pal_objects[1], 1, false);
         // }
     };
@@ -10079,12 +10079,13 @@ var Scene01 = (function () {
     Scene01.prototype.update = function (time) {
         this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
+        this.cube.scale.set(0, 0, 0);
         var timerStep = 0.004;
         for (var i = 0; i < this.uniforms.length; i++) {
             //console.log(this.uniforms[i]);
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = this.gui.parameters.threshold;
+            this.uniforms[i].threshold.value = Math.sin(time * 0.0005) * 30; //this.gui.parameters.threshold;
         }
         //this.scene.position.z += 0.1;
         // this.cube.rotation.x += 0.1;
@@ -27183,9 +27184,9 @@ var Main = (function () {
                 _this.scene02 = new __WEBPACK_IMPORTED_MODULE_2__Scene02__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene03 = new __WEBPACK_IMPORTED_MODULE_3__Scene03__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene04 = new __WEBPACK_IMPORTED_MODULE_4__Scene04__["a" /* default */](_this.vthree.renderer, _this.gui);
-                // this.vthree.addScene(this.scene01);
+                _this.vthree.addScene(_this.scene01);
                 // this.vthree.addScene(this.scene02);
-                _this.vthree.addScene(_this.scene04);
+                // this.vthree.addScene(this.scene04);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続

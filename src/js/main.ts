@@ -44,9 +44,9 @@ class Main
                 this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 this.scene04 = new Scene04(this.vthree.renderer,this.gui);
-                // this.vthree.addScene(this.scene01);
+                this.vthree.addScene(this.scene01);
                 // this.vthree.addScene(this.scene02);
-                this.vthree.addScene(this.scene04);
+                // this.vthree.addScene(this.scene04);
                 this.vthree.draw();
 
                 this.vthree.isUpdate = true;
