@@ -10,6 +10,11 @@ export default class GUIParameters
     public particleStartY:number = 0.1;
     public particleStartZ:number = 0.1;
 
+
+    public image_speed:number 0.005;
+    public image_noiseScale:number = 0.1;
+    public image_noiseSeed:number = 0.1;
+
     // public particleSpeed:number = 0.3;
     // public radiusSpeed:number = 0.1;
     // public particleMaxRad:number = 3000;

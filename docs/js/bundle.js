@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 19);
+/******/ 	return __webpack_require__(__webpack_require__.s = 20);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -9892,8 +9892,8 @@ return jQuery;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_dat_gui__);
 
 
@@ -9910,6 +9910,7 @@ var GUI = (function () {
         this.rendering = this.gui.addFolder('animation');
         this.scene03 = this.gui.addFolder("scene03");
         this.particle = this.gui.addFolder("particle");
+        this.image = this.gui.addFolder("image");
         // this.camera = this.gui.addFolder('camera');
         this.init();
     }
@@ -9921,6 +9922,9 @@ var GUI = (function () {
         this.particle.add(this.parameters, "particleStartX", -3.0, 3.0);
         this.particle.add(this.parameters, "particleStartY", -5.0, 5.0);
         this.particle.add(this.parameters, "particleStartZ", -1.0, 1.0);
+        this.image.add(this.parameters, "image_speed", 0.0, 0.1);
+        this.image.add(this.parameters, "image_noiseScale", 0.0, 1.0);
+        this.image.add(this.parameters, "image_noiseSeed", 0.0, 3.0);
     };
     return GUI;
 }());
@@ -10685,11 +10689,77 @@ var Scene03 = (function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+var Scene05 = (function () {
+    // ******************************************************
+    function Scene05(renderer, gui) {
+        this.renderer = renderer;
+        this.gui = gui;
+        this.createScene();
+        console.log("scene created!");
+    }
+    // ******************************************************
+    Scene05.prototype.createScene = function () {
+        this.scene = new THREE.Scene();
+        this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+        this.uniform = {
+            texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
+            time: { value: 0.0 },
+            noiseSeed: { value: 0.1 },
+            noiseScale: { value: 0.1 }
+        };
+        // 立方体のジオメトリーを作成
+        this.geometry = new THREE.PlaneGeometry(1, window.innerHeight / window.innerWidth, 50, 50);
+        // 緑のマテリアルを作成
+        this.material = new THREE.ShaderMaterial({
+            uniforms: this.uniform,
+            vertexShader: document.getElementById('imageVertexShader').textContent,
+            fragmentShader: document.getElementById('imageFragmentShader').textContent
+        });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.plane = new THREE.Mesh(this.geometry, this.material);
+        // メッシュをシーンに追加
+        this.scene.add(this.plane);
+        // カメラを作成
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // カメラ位置を設定
+        this.camera.position.z = 0.35;
+    };
+    // ******************************************************
+    Scene05.prototype.click = function () {
+    };
+    // ******************************************************
+    Scene05.prototype.keyUp = function (e) {
+    };
+    // ******************************************************
+    Scene05.prototype.mouseMove = function (e) {
+    };
+    // ******************************************************
+    Scene05.prototype.keyDown = function (e) {
+    };
+    // ******************************************************
+    Scene05.prototype.onMouseDown = function (e) {
+    };
+    // ******************************************************
+    Scene05.prototype.update = function (time) {
+        this.uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        this.uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        this.uniform.time.value += this.gui.parameters.image_speed;
+    };
+    return Scene05;
+}());
+/* harmony default export */ __webpack_exports__["a"] = (Scene05);
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(18);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__);
-var Stats = __webpack_require__(16);
+var Stats = __webpack_require__(17);
 
 
 var VThree = (function () {
@@ -10880,7 +10950,7 @@ var VThree = (function () {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 /**
@@ -11256,7 +11326,7 @@ function GPUComputationRenderer( sizeX, sizeY, renderer ) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports) {
 
 /**
@@ -16807,7 +16877,7 @@ THREE.ColladaLoader = function () {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports) {
 
 /*
@@ -17082,7 +17152,7 @@ THREE.DDSLoader.parse = function ( buffer, loadMipmaps ) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports) {
 
 /**
@@ -20329,7 +20399,7 @@ THREE.DDSLoader.parse = function ( buffer, loadMipmaps ) {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports) {
 
 /**
@@ -20875,7 +20945,7 @@ THREE.MTLLoader.MaterialCreator.prototype = {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports) {
 
 /**
@@ -21624,14 +21694,14 @@ THREE.OBJLoader.prototype = {
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(15)
-module.exports.color = __webpack_require__(14)
+module.exports = __webpack_require__(16)
+module.exports.color = __webpack_require__(15)
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports) {
 
 /**
@@ -22391,7 +22461,7 @@ dat.color.toString,
 dat.utils.common);
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports) {
 
 /**
@@ -26056,7 +26126,7 @@ dat.dom.dom,
 dat.utils.common);
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports) {
 
 // stats.js - http://github.com/mrdoob/stats.js
@@ -26068,7 +26138,7 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports) {
 
 /**
@@ -27090,7 +27160,7 @@ Object.defineProperties( THREE.OrbitControls.prototype, {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -27103,6 +27173,9 @@ var GUIParameters = (function () {
         this.particleStartX = 0.1;
         this.particleStartY = 0.1;
         this.particleStartZ = 0.1;
+        this.image_speed = 0.005;
+        this.image_noiseScale = 0.1;
+        this.image_noiseSeed = 0.1;
         // public particleSpeed:number = 0.3;
         // public radiusSpeed:number = 0.1;
         // public particleMaxRad:number = 3000;
@@ -27133,7 +27206,7 @@ var GUIParameters = (function () {
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -27144,20 +27217,22 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__Scene02__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__Scene03__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__Scene04__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__VThree__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__GUI__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_7__loaders_MTLLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js__ = __webpack_require__(9);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__loaders_DDSLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__loaders_OBJLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__loaders_FBXLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__loaders_ColladaLoader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__GPUComputationRenderer_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Scene05__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__VThree__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__GUI__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_MTLLoader_js__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_MTLLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__loaders_MTLLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_DDSLoader_js__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__loaders_DDSLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__loaders_DDSLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_OBJLoader_js__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__loaders_OBJLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__loaders_OBJLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_FBXLoader_js__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__loaders_FBXLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__loaders_FBXLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__loaders_ColladaLoader_js__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__loaders_ColladaLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__loaders_ColladaLoader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__GPUComputationRenderer_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__GPUComputationRenderer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__GPUComputationRenderer_js__);
+
 
 
 
@@ -27176,17 +27251,19 @@ var Main = (function () {
     function Main(num) {
         // URLのアンカー（#以降の部分）を取得
         var _this = this;
-        this.gui = new __WEBPACK_IMPORTED_MODULE_6__GUI__["a" /* default */]();
+        this.gui = new __WEBPACK_IMPORTED_MODULE_7__GUI__["a" /* default */]();
         __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/vthree.config.json", function (config) {
             __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/guisetting.json", function (data) {
-                _this.vthree = new __WEBPACK_IMPORTED_MODULE_5__VThree__["a" /* default */](1.0, false, config);
+                _this.vthree = new __WEBPACK_IMPORTED_MODULE_6__VThree__["a" /* default */](1.0, false, config);
                 _this.scene01 = new __WEBPACK_IMPORTED_MODULE_1__Scene01__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene02 = new __WEBPACK_IMPORTED_MODULE_2__Scene02__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene03 = new __WEBPACK_IMPORTED_MODULE_3__Scene03__["a" /* default */](_this.vthree.renderer, _this.gui);
                 _this.scene04 = new __WEBPACK_IMPORTED_MODULE_4__Scene04__["a" /* default */](_this.vthree.renderer, _this.gui);
-                _this.vthree.addScene(_this.scene01);
+                _this.scene05 = new __WEBPACK_IMPORTED_MODULE_5__Scene05__["a" /* default */](_this.vthree.renderer, _this.gui);
+                // this.vthree.addScene(this.scene01);
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
+                _this.vthree.addScene(_this.scene05);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続

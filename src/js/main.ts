@@ -6,6 +6,7 @@ import Scene01 from "./Scene01";
 import Scene02 from "./Scene02";
 import Scene03 from "./Scene03";
 import Scene04 from "./Scene04";
+import Scene05 from "./Scene05";
 import VThree from "./VThree";
 import GUI from "./GUI";
 import "./loaders/MTLLoader.js";
@@ -24,6 +25,7 @@ class Main
     public scene02:Scene02;
     public scene03:Scene03;
     public scene04:Scene04;
+    public scene05:Scene05;
     public socket:any;
 
     public gui:GUI = new GUI();
@@ -44,9 +46,11 @@ class Main
                 this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 this.scene04 = new Scene04(this.vthree.renderer,this.gui);
-                this.vthree.addScene(this.scene01);
+                this.scene05 = new Scene05(this.vthree.renderer,this.gui);
+                // this.vthree.addScene(this.scene01);
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
+                this.vthree.addScene(this.scene05);
                 this.vthree.draw();
 
                 this.vthree.isUpdate = true;
