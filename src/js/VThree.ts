@@ -12,7 +12,7 @@ export default class VThree
     public scenes:any[] = [];
     // Renderer
     public renderer:THREE.WebGLRenderer;
-    private controls:Object;
+    private controls:any[] = [];
 
     public opacityStep:number = 0.1;
     public opacity:number = 1.0;
@@ -86,7 +86,9 @@ export default class VThree
 
         this.scenes.push(scene);
         this.cameras.push(scene.camera);
-        this.controls = new THREE.OrbitControls( scene.camera, this.renderer.domElement );
+        let controls = new THREE.OrbitControls( scene.camera, this.renderer.domElement );
+        controls.enableKeys = false;
+        this.controls.push(controls);
 
     }
 
@@ -202,6 +204,17 @@ export default class VThree
 
             console.log(this.NUM);
             this.scenes[this.NUM].keyDown(e);
+            for(let i = 0; i < this.controls.length; i++)
+            {
+                if(i == this.NUM)
+                {
+                    this.controls[i].enabled = true;
+                } else
+                {
+                    this.controls[i].enabled = false;
+                }
+            }
+
         }
 
     }
