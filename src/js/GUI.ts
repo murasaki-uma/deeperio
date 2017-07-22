@@ -47,6 +47,13 @@ export default class GUI
         this.image.add(this.parameters,"image_speed",0.0,0.1);
         this.image.add(this.parameters,"image_noiseScale",0.0,1.0);
         this.image.add(this.parameters,"image_noiseSeed",0.0,3.0);
+        this.image.add(this.parameters,"image_speed_scale__vertex",0.0,0.1);
+        this.image.add(this.parameters,"image_noiseScale_vertex",0.0,10.0);
+        this.image.add(this.parameters,"image_noiseSeed_vertex",0.0,15.0);
+        this.image.add(this.parameters,"image_distance_threshold",0.0,2.0);
+        this.image.add(this.parameters,"image_positionX",-30.0,30.0);
+        this.image.add(this.parameters,"image_positionY",-30.0,30.0);
+        this.image.add(this.parameters,"image_positionZ",-32.0,32.0);
     }
 
 

@@ -133,25 +133,28 @@ script(type="x-shader/x-vertex" id="imageVertexShader").
     varying vec3 vPos;
     uniform float noiseScale;
     uniform float noiseSeed;
+    uniform float time_scale_vertex;
+    uniform float noiseSeed_vertex;
+    uniform float noiseScale_vertex;
+    uniform float distance_threshold;
     void main() {
 
        float d = distance(position.xyz,vec3(0,0,0));
-       float maxd = 0.2;
 
-       if(d > maxd)
+
+       if(d > distance_threshold)
        {
          d = 0.0;
        } else
        {
-        d = maxd - d;
+        d = distance_threshold - d;
        }
 
        d *= 5.0;
-       //d = min(d,maxd);
-       //d = maxd - d;
-       float height = snoise(vec3(position.xy*noiseSeed*5.0,time))*noiseScale;
+
+       float height = snoise(vec3(position.xy*noiseSeed_vertex,time*time_scale_vertex))*noiseScale_vertex;
        vec3 _position = position;
-       _position.z -= d;
+       _position.z -= abs(d*(height));
        vec4 mvPosition = modelViewMatrix * vec4( _position, 1.0 );
        vPos = _position;
        vUv = uv;
@@ -166,6 +169,7 @@ script(type="x-shader/x-fragment" id="imageFragmentShader").
     varying vec3 vPos;
     uniform float noiseScale;
     uniform float noiseSeed;
+
 
     vec3 mod289(vec3 x) {
           return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -292,9 +296,15 @@ script(type="x-shader/x-fragment" id="imageFragmentShader").
           return normalize( vec3( x , y , z ) * divisor );
 
         }
+    uniform bool display;
     void main() {
         vec3 noise = curlNoise(vec3(vPos.xy*noiseSeed,time))*noiseScale;
         vec3 color = texture2D( texture, vUv+noise.xy ).rgb;
         gl_FragColor = vec4( color, 1.0 );
+
+        if(!display)
+        {
+            discard;
+        }
     }
 

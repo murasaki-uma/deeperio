@@ -9925,6 +9925,13 @@ var GUI = (function () {
         this.image.add(this.parameters, "image_speed", 0.0, 0.1);
         this.image.add(this.parameters, "image_noiseScale", 0.0, 1.0);
         this.image.add(this.parameters, "image_noiseSeed", 0.0, 3.0);
+        this.image.add(this.parameters, "image_speed_scale__vertex", 0.0, 0.1);
+        this.image.add(this.parameters, "image_noiseScale_vertex", 0.0, 10.0);
+        this.image.add(this.parameters, "image_noiseSeed_vertex", 0.0, 15.0);
+        this.image.add(this.parameters, "image_distance_threshold", 0.0, 2.0);
+        this.image.add(this.parameters, "image_positionX", -30.0, 30.0);
+        this.image.add(this.parameters, "image_positionY", -30.0, 30.0);
+        this.image.add(this.parameters, "image_positionZ", -32.0, 32.0);
     };
     return GUI;
 }());
@@ -9937,66 +9944,215 @@ var GUI = (function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-var Scene05 = (function () {
+// *********** ひとつめのシーン *********** //
+var Scene01 = (function () {
     // ******************************************************
-    function Scene05(renderer, gui) {
+    function Scene01(renderer, gui) {
+        var _this = this;
+        this.uniforms = [];
+        this.pal_objects = [];
+        this.TEXTURE_WIDTH = 320;
+        this.TEXTURE_HEIGHT = 320;
+        this.isMoveToFront_Pal = false;
+        this.translateZ_pal = 0;
+        this.isImageUpdate = false;
+        this.replaceShader_WireWave = function (object, isTransparent, isWire) {
+            // let materials = object.children[0].material.materials;
+            var materials = object.children[0].children[0].material.materials;
+            console.log(materials);
+            for (var i = 0; i < materials.length; i++) {
+                //let img = materials[i].map.image.src;//.attributes.currentSrc;
+                console.log(materials[i]);
+                console.log(materials[i].map);
+                console.log(materials[i].map.image);
+                var img = materials[i].map.image.currentSrc;
+                var _uniforms = {
+                    time: { value: 1.0 },
+                    texture: { value: new THREE.TextureLoader().load(img) },
+                    transparent: { value: isTransparent },
+                    threshold: { value: 0 },
+                    texturePosition: { value: null }
+                };
+                _this.uniforms.push(_uniforms);
+                // materials[i].wireframe = true;
+                materials[i] = new THREE.ShaderMaterial({
+                    uniforms: _uniforms,
+                    vertexShader: document.getElementById("vertex_pal").textContent,
+                    fragmentShader: document.getElementById("fragment_pal").textContent,
+                    wireframe: isWire,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                    // drawBuffer:true
+                });
+            }
+            return object;
+        };
         this.renderer = renderer;
-        this.gui = gui;
         this.createScene();
+        this.createImage();
+        this.gui = gui;
         console.log("scene created!");
     }
     // ******************************************************
-    Scene05.prototype.createScene = function () {
+    Scene01.prototype.createScene = function () {
+        var _this = this;
         this.scene = new THREE.Scene();
-        this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));
-        this.uniform = {
+        // 立方体のジオメトリーを作成
+        this.geometry = new THREE.BoxGeometry(1, 1, 1);
+        // 緑のマテリアルを作成
+        this.material = new THREE.MeshStandardMaterial({
+            roughness: 0.7,
+            color: 0xffffff,
+            bumpScale: 0.002,
+            metalness: 0.2
+        });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.cube = new THREE.Mesh(this.geometry, this.material);
+        // メッシュをシーンに追加
+        this.scene.add(this.cube);
+        var ambient = new THREE.AmbientLight(0xffffff);
+        this.scene.add(ambient);
+        var dLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        dLight.position.set(0, 1, 0).normalize();
+        this.scene.add(dLight);
+        var directionalLight = new THREE.DirectionalLight(0xffeedd);
+        directionalLight.position.set(0, 0, 1).normalize();
+        this.scene.add(directionalLight);
+        var onProgress = function (xhr) {
+            if (xhr.lengthComputable) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
+            }
+        };
+        var onError = function (xhr) {
+        };
+        var loader = new THREE.ColladaLoader();
+        loader.options.convertUpAxis = true;
+        for (var i = 0; i < 1; i++) {
+            loader.load('./models/pal/pal.dae', function (collada) {
+                var object = collada.scene;
+                console.log(object);
+                object.position.y = -1;
+                object.position.x = 0;
+                //object.rotation.y = 0.08 + Math.PI;
+                _this.pal_objects.push(object);
+                _this.scene.add(object);
+            }, onProgress, onError);
+        }
+        // カメラを作成
+        this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // カメラ位置を設定
+        this.scene.scale.set(1.2, 1, 1);
+        this.camera.position.z = 30;
+        this.initComputeRenderer();
+    };
+    Scene01.prototype.initComputeRenderer = function () {
+        this.gpuCompute = new GPUComputationRenderer(this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer);
+        console.log(this.gpuCompute);
+        var dtPosition = this.gpuCompute.createTexture();
+        this.fillTexture(dtPosition);
+        this.positionVariable = this.gpuCompute.addVariable("texturePosition", document.getElementById('computeShaderPosition').textContent, dtPosition);
+        this.gpuCompute.setVariableDependencies(this.positionVariable, [this.positionVariable]);
+        var error = this.gpuCompute.init();
+        if (error !== null) {
+            console.error(error);
+        }
+    };
+    Scene01.prototype.fillTexture = function (texturePosition) {
+        var posArray = texturePosition.image.data;
+        for (var k = 0, k1 = posArray.length; k < k1; k += 4) {
+            var x, y, z;
+            x = 0;
+            y = 0;
+            z = 0;
+            posArray[k + 0] = x;
+            posArray[k + 1] = y;
+            posArray[k + 2] = z;
+            posArray[k + 3] = 0;
+        }
+    };
+    // ******************************************************
+    Scene01.prototype.keyUp = function (e) {
+    };
+    Scene01.prototype.click = function () {
+        this.replaceShader_WireWave(this.pal_objects[0], 0, false);
+        // this.replaceShader_WireWave(this.pal_objects[1],1,false);
+    };
+    Scene01.prototype.createImage = function () {
+        this.image_uniform = {
             texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
             time: { value: 0.0 },
             noiseSeed: { value: 0.1 },
-            noiseScale: { value: 0.1 }
+            noiseScale: { value: 0.1 },
+            time_scale_vertex: { value: 0.0 },
+            noiseSeed_vertex: { value: 0.1 },
+            noiseScale_vertex: { value: 0.1 },
+            distance_threshold: { value: 0.3 },
+            display: { value: true }
         };
         // 立方体のジオメトリーを作成
-        this.geometry = new THREE.PlaneGeometry(1, window.innerHeight / window.innerWidth, 100, 100);
+        this.plane_geometry = new THREE.PlaneGeometry(1, window.innerHeight / window.innerWidth, 100, 100);
         // 緑のマテリアルを作成
-        this.material = new THREE.ShaderMaterial({
-            uniforms: this.uniform,
+        this.plane_material = new THREE.ShaderMaterial({
+            uniforms: this.image_uniform,
             vertexShader: document.getElementById('imageVertexShader').textContent,
             fragmentShader: document.getElementById('imageFragmentShader').textContent,
             side: THREE.DoubleSide
         });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        this.plane = new THREE.Mesh(this.geometry, this.material);
+        this.plane = new THREE.Mesh(this.plane_geometry, this.plane_material);
         // メッシュをシーンに追加
         this.scene.add(this.plane);
-        // カメラを作成
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // カメラ位置を設定
-        this.camera.position.z = 4.35;
     };
     // ******************************************************
-    Scene05.prototype.click = function () {
+    Scene01.prototype.keyDown = function (e) {
+        if (e.key == "p") {
+            this.image_uniform.display.value = !this.image_uniform.display.value;
+        }
+        if (e.key == "m") {
+            this.isMoveToFront_Pal = !this.isMoveToFront_Pal;
+        }
     };
     // ******************************************************
-    Scene05.prototype.keyUp = function (e) {
+    Scene01.prototype.mouseMove = function (e) {
     };
     // ******************************************************
-    Scene05.prototype.mouseMove = function (e) {
+    Scene01.prototype.onMouseDown = function (e) {
     };
     // ******************************************************
-    Scene05.prototype.keyDown = function (e) {
+    Scene01.prototype.update = function (time) {
+        this.gpuCompute.compute();
+        this.cube.position.z = this.gui.parameters.threshold;
+        this.cube.scale.set(0, 0, 0);
+        var timerStep = 0.004;
+        for (var i = 0; i < this.uniforms.length; i++) {
+            //console.log(this.uniforms[i]);
+            this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
+            this.uniforms[i].time.value += timerStep;
+            // this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+        }
+        if (this.isMoveToFront_Pal) {
+            this.translateZ_pal += timerStep;
+            this.pal_objects[0].translateZ(this.translateZ_pal * 0.04);
+        }
+        if (this.isImageUpdate) {
+            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+            this.image_uniform.time.value += this.gui.parameters.image_speed;
+            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        }
+        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, this.gui.parameters.image_positionZ);
+        this.plane.scale.set(14, 14, 14);
+        //this.scene.position.z += 0.1;
+        // this.cube.rotation.x += 0.1;
+        // this.cube.rotation.y += 0.1;
     };
-    // ******************************************************
-    Scene05.prototype.onMouseDown = function (e) {
-    };
-    // ******************************************************
-    Scene05.prototype.update = function (time) {
-        this.uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        this.uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        this.uniform.time.value += this.gui.parameters.image_speed;
-    };
-    return Scene05;
+    return Scene01;
 }());
-/* harmony default export */ __webpack_exports__["a"] = (Scene05);
+/* harmony default export */ __webpack_exports__["a"] = (Scene01);
 
 
 /***/ }),
@@ -26436,6 +26592,13 @@ var GUIParameters = (function () {
         this.image_speed = 0.005;
         this.image_noiseScale = 0.1;
         this.image_noiseSeed = 0.1;
+        this.image_speed_scale__vertex = 0.005;
+        this.image_noiseScale_vertex = 0.1;
+        this.image_noiseSeed_vertex = 0.1;
+        this.image_distance_threshold = 0.3;
+        this.image_positionX = 0.0;
+        this.image_positionY = 0.0;
+        this.image_positionZ = 29.5;
         // public particleSpeed:number = 0.3;
         // public radiusSpeed:number = 0.1;
         // public particleMaxRad:number = 3000;
@@ -26473,7 +26636,7 @@ var GUIParameters = (function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene05__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene01__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__VThree__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__GUI__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__loaders_MTLLoader_js__ = __webpack_require__(8);
@@ -26507,15 +26670,15 @@ var Main = (function () {
         __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/vthree.config.json", function (config) {
             __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/guisetting.json", function (data) {
                 _this.vthree = new __WEBPACK_IMPORTED_MODULE_2__VThree__["a" /* default */](1.0, false, config);
-                // this.scene01 = new Scene01(this.vthree.renderer,this.gui);
+                _this.scene01 = new __WEBPACK_IMPORTED_MODULE_1__Scene01__["a" /* default */](_this.vthree.renderer, _this.gui);
                 // this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 // this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 // this.scene04 = new Scene04(this.vthree.renderer,this.gui);
-                _this.scene05 = new __WEBPACK_IMPORTED_MODULE_1__Scene05__["a" /* default */](_this.vthree.renderer, _this.gui);
-                // this.vthree.addScene(this.scene01);
+                // this.scene05 = new Scene05(this.vthree.renderer,this.gui);
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
-                _this.vthree.addScene(_this.scene05);
+                // this.vthree.addScene(this.scene05);
+                _this.vthree.addScene(_this.scene01);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続

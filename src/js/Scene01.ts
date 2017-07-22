@@ -24,10 +24,22 @@ export default class Scene01{
     private TEXTURE_WIDTH:number = 320;
     private TEXTURE_HEIGHT:number = 320;
 
+    private isMoveToFront_Pal:boolean = false;
+    private translateZ_pal:number = 0;
+
+    // textured
+    private plane_geometry:THREE.PlaneGeometry;
+    private plane_material:THREE.ShaderMaterial;
+    private plane:THREE.Mesh;
+    private image_uniform:any;
+    private isImageUpdate:boolean = false;
+
+
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
         this.createScene();
+        this.createImage();
         this.gui = gui;
 
         console.log("scene created!")
@@ -75,7 +87,7 @@ export default class Scene01{
 
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
-        for(let i = 0; i < 2; i++)
+        for(let i = 0; i < 1; i++)
         {
             loader.load( './models/pal/pal.dae', ( collada )=> {
                 var object = collada.scene;
@@ -186,18 +198,55 @@ export default class Scene01{
 
     public click()
     {
-        // for(let i = 0; i < this.pal_objects.length; i++)
-        // {
         this.replaceShader_WireWave(this.pal_objects[0],0,false);
-        this.replaceShader_WireWave(this.pal_objects[1],1,false);
-        // }
+
+        // this.replaceShader_WireWave(this.pal_objects[1],1,false);
 
     }
 
 
+    public createImage()
+    {
+        this.image_uniform = {
+            texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
+            time: {value:0.0},
+            noiseSeed:{value:0.1},
+            noiseScale:{value:0.1},
+            time_scale_vertex: {value:0.0},
+            noiseSeed_vertex:{value:0.1},
+            noiseScale_vertex:{value:0.1},
+            distance_threshold:{value:0.3},
+            display:{value:true}
+        };
+
+        // 立方体のジオメトリーを作成
+        this.plane_geometry = new THREE.PlaneGeometry( 1, window.innerHeight/window.innerWidth,100,100);
+        // 緑のマテリアルを作成
+        this.plane_material = new THREE.ShaderMaterial( {
+            uniforms:       this.image_uniform,
+            vertexShader:   document.getElementById( 'imageVertexShader' ).textContent,
+            fragmentShader: document.getElementById( 'imageFragmentShader' ).textContent,
+            side:THREE.DoubleSide
+        });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.plane = new THREE.Mesh( this.plane_geometry, this.plane_material );
+        // メッシュをシーンに追加
+        this.scene.add( this.plane );
+    }
+
     // ******************************************************
     public keyDown(e:KeyboardEvent)
     {
+
+        if(e.key == "p")
+        {
+            this.image_uniform.display.value = !this.image_uniform.display.value;
+        }
+
+        if(e.key == "m")
+        {
+            this.isMoveToFront_Pal = !this.isMoveToFront_Pal;
+        }
 
     }
 
@@ -216,6 +265,8 @@ export default class Scene01{
     }
 
     // ******************************************************
+
+
     public update(time)
     {
 
@@ -224,20 +275,49 @@ export default class Scene01{
         this.cube.position.z = this.gui.parameters.threshold;
         this.cube.scale.set(0,0,0);
         let timerStep:number = 0.004;
+
         for(let i = 0; i < this.uniforms.length; i++)
         {
             //console.log(this.uniforms[i]);
+
+
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget( this.positionVariable ).texture;
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+            // this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
 
         }
 
+        if(this.isMoveToFront_Pal)
+        {
+            this.translateZ_pal += timerStep;
+            this.pal_objects[0].translateZ(this.translateZ_pal*0.04);
+        }
 
-            //this.scene.position.z += 0.1;
+        if(this.isImageUpdate)
+        {
+            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+            this.image_uniform.time.value += this.gui.parameters.image_speed;
+            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        }
+
+
+
+        this.plane.position.set (
+            this.gui.parameters.image_positionX,
+            this.gui.parameters.image_positionY,
+            this.gui.parameters.image_positionZ,
+        );
+
+        this.plane.scale.set(14,14,14);
+        //this.scene.position.z += 0.1;
 
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
+
 
     }
 

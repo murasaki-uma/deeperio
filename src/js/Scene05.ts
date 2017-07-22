@@ -6,10 +6,10 @@ export default class Scene05{
     public scene: THREE.Scene;
     public camera: THREE.Camera;
     private renderer:THREE.WebGLRenderer;
-    private geometry:THREE.PlaneGeometry;
-    private material:THREE.ShaderMaterial;
+    private plane_geometry:THREE.PlaneGeometry;
+    private plane_material:THREE.ShaderMaterial;
     private plane:THREE.Mesh;
-    private uniform:any;
+    private image_uniform:any;
     private gui:GUI;
 
 
@@ -32,24 +32,28 @@ export default class Scene05{
         this.scene.add(new THREE.AmbientLight(0xffffff,1.0));
 
 
-        this.uniform = {
+        this.image_uniform = {
             texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
             time: {value:0.0},
             noiseSeed:{value:0.1},
-            noiseScale:{value:0.1}
+            noiseScale:{value:0.1},
+            time_scale_vertex: {value:0.0},
+            noiseSeed_vertex:{value:0.1},
+            noiseScale_vertex:{value:0.1},
+            distance_threshold:{value:0.3}
         };
 
         // 立方体のジオメトリーを作成
-        this.geometry = new THREE.PlaneGeometry( 1, window.innerHeight/window.innerWidth,100,100);
+        this.plane_geometry = new THREE.PlaneGeometry( 1, window.innerHeight/window.innerWidth,100,100);
         // 緑のマテリアルを作成
-        this.material = new THREE.ShaderMaterial( {
-            uniforms:       this.uniform,
+        this.plane_material = new THREE.ShaderMaterial( {
+            uniforms:       this.image_uniform,
             vertexShader:   document.getElementById( 'imageVertexShader' ).textContent,
             fragmentShader: document.getElementById( 'imageFragmentShader' ).textContent,
             side:THREE.DoubleSide
         });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        this.plane = new THREE.Mesh( this.geometry, this.material );
+        this.plane = new THREE.Mesh( this.plane_geometry, this.plane_material );
         // メッシュをシーンに追加
         this.scene.add( this.plane );
 
@@ -100,9 +104,13 @@ export default class Scene05{
     public update(time)
     {
 
-        this.uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        this.uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        this.uniform.time.value += this.gui.parameters.image_speed;
+        this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        this.image_uniform.time.value += this.gui.parameters.image_speed;
+        this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+        this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+        this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+        this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
 
     }
 

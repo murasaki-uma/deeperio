@@ -15,6 +15,16 @@ export default class GUIParameters
     public image_noiseScale:number = 0.1;
     public image_noiseSeed:number = 0.1;
 
+    public image_speed_scale__vertex:number 0.005;
+    public image_noiseScale_vertex:number = 0.1;
+    public image_noiseSeed_vertex:number = 0.1;
+    public image_distance_threshold:number = 0.3;
+
+    public image_positionX:number = 0.0;
+    public image_positionY:number = 0.0;
+    public image_positionZ:number = 29.5;
+
+
     // public particleSpeed:number = 0.3;
     // public radiusSpeed:number = 0.1;
     // public particleMaxRad:number = 3000;
