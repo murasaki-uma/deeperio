@@ -236,6 +236,8 @@ export default class VThree
         {
             if(this.NUM == i)
             {
+
+
                 this.scenes[i].guiOpen();
             }else {
                 this.scenes[i].guiClose();
@@ -243,13 +245,13 @@ export default class VThree
         }
     }
 
+
     public updateCanvasAlpha()
     {
         if(this.transparent)
         {
             this.renderer.domElement.style.opacity = this.opacity;
         }
-
 
     }
 
@@ -268,6 +270,8 @@ export default class VThree
     {
         if(this.debugMode)
         {
+
+
             $('.dg').css('display','block');
         } else
         {
@@ -278,16 +282,19 @@ export default class VThree
     public start()
     {
 
+
     }
 
     // 最終的な描写処理と、アニメーション関数をワンフレームごとに実行
     public draw(time) {
 
         this.stats.update(time);
-
-
         this.scenes[this.NUM].update(time,this.isUpdate);
-        this.renderer.render(this.scenes[this.NUM].scene, this.scenes[this.NUM].camera);
+        if(!this.scenes[this.NUM].isPostProcessing)
+        {
+            this.renderer.render(this.scenes[this.NUM].scene, this.scenes[this.NUM].camera);
+        }
+
         if(this.isUpdate)
         {
             requestAnimationFrame(this.draw.bind(this));

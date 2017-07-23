@@ -1,6 +1,8 @@
 
 // *********** ひとつめのシーン *********** //
 import GUI from "./GUI";
+import SphereGeometry = THREE.SphereGeometry;
+import MeshLambertMaterial = THREE.MeshLambertMaterial;
 export default class Scene05{
 
     public scene: THREE.Scene;
@@ -11,6 +13,9 @@ export default class Scene05{
     private plane:THREE.Mesh;
     private image_uniform:any;
     private gui:GUI;
+    public isPostProcessing:boolean = true;
+    private isImageUpdate:boolean = false;
+    private composer:any;
 
 
 
@@ -40,7 +45,8 @@ export default class Scene05{
             time_scale_vertex: {value:0.0},
             noiseSeed_vertex:{value:0.1},
             noiseScale_vertex:{value:0.1},
-            distance_threshold:{value:0.3}
+            distance_threshold:{value:0.3},
+            display:{value:true}
         };
 
         // 立方体のジオメトリーを作成
@@ -54,14 +60,23 @@ export default class Scene05{
         });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.plane = new THREE.Mesh( this.plane_geometry, this.plane_material );
-        // メッシュをシーンに追加
         this.scene.add( this.plane );
 
         // カメラを作成
         this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
         // カメラ位置を設定
-        this.camera.position.z = 4.35;
+        this.camera.position.z = 0;
 
+
+        // this.composer = new THREE.EffectComposer( this.renderer );
+        // this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
+        // var effect = new THREE.ShaderPass( THREE.DotScreenShader );
+        // effect.uniforms[ 'scale' ].value = 4;
+        // this.composer.addPass( effect );
+        // var effect = new THREE.ShaderPass( THREE.RGBShiftShader );
+        // effect.uniforms[ 'amount' ].value = 0.0015;
+        // effect.renderToScreen = true;
+        // this.composer.addPass( effect );
 
 
 
@@ -91,6 +106,11 @@ export default class Scene05{
     public keyDown(e:KeyboardEvent)
     {
 
+        if(e.key == "p")
+        {
+            this.image_uniform.display.value = !this.image_uniform.display.value;
+        }
+
     }
 
     // ******************************************************
@@ -104,13 +124,28 @@ export default class Scene05{
     public update(time)
     {
 
-        this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        this.image_uniform.time.value += this.gui.parameters.image_speed;
-        this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
-        this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
-        this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
-        this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        // if(this.isImageUpdate)
+        // {
+            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+            this.image_uniform.time.value += this.gui.parameters.image_speed;
+            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        // }
+
+
+
+        this.plane.position.set (
+            this.gui.parameters.image_positionX,
+            this.gui.parameters.image_positionY,
+            this.gui.parameters.image_positionZ,
+        );
+
+        // this.plane.scale.set(14,14,14);
+        // this.composer.render();
+
 
     }
 

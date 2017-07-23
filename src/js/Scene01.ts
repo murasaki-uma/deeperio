@@ -231,7 +231,7 @@ export default class Scene01{
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.plane = new THREE.Mesh( this.plane_geometry, this.plane_material );
         // メッシュをシーンに追加
-        this.scene.add( this.plane );
+        // this.scene.add( this.plane );
     }
 
     // ******************************************************

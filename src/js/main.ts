@@ -7,6 +7,7 @@ import Scene02 from "./Scene02";
 import Scene03 from "./Scene03";
 import Scene04 from "./Scene04";
 import Scene05 from "./Scene05";
+import PostProcessingTest from "./postprocessing_study"
 import VThree from "./VThree";
 import GUI from "./GUI";
 import "./loaders/MTLLoader.js";
@@ -15,6 +16,31 @@ import "./loaders/OBJLoader.js";
 import "./loaders/FBXLoader.js";
 import "./loaders/ColladaLoader.js";
 import "./GPUComputationRenderer.js";
+
+import "./shaders/BleachBypassShader.js";
+import "./shaders/ColorifyShader.js";
+import "./shaders/ConvolutionShader.js";
+import "./shaders/CopyShader.js";
+import "./shaders/DotScreenShader.js";
+import "./shaders/DigitalGlitch.js";
+import "./shaders/FilmShader.js";
+import "./shaders/HorizontalBlurShader.js";
+import "./shaders/SepiaShader.js";
+import "./shaders/VerticalBlurShader.js";
+import "./shaders/VignetteShader.js";
+
+
+import "./postprocessing/EffectComposer.js";
+import "./postprocessing/RenderPass.js";
+import "./postprocessing/BloomPass.js";
+import "./postprocessing/FilmPass.js";
+import "./postprocessing/DotScreenPass.js";
+import "./postprocessing/TexturePass.js";
+import "./postprocessing/ShaderPass.js";
+import "./postprocessing/MaskPass.js";
+import "./postprocessing/GlitchPass.js";
+
+
 import Scene = THREE.Scene;
 
 class Main
@@ -26,10 +52,10 @@ class Main
     public scene03:Scene03;
     public scene04:Scene04;
     public scene05:Scene05;
+    public post:PostProcessingTest
     public socket:any;
 
     public gui:GUI = new GUI();
-
 
 
     constructor(num:number) {
@@ -42,16 +68,18 @@ class Main
         $.getJSON("json/vthree.config.json" , (config) => {
             $.getJSON("json/guisetting.json" , (data) => {
                 this.vthree = new VThree(1.0, false,config);
-                this.scene01 = new Scene01(this.vthree.renderer,this.gui);
+                // this.scene01 = new Scene01(this.vthree.renderer,this.gui);
                 // this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 // this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 // this.scene04 = new Scene04(this.vthree.renderer,this.gui);
                 // this.scene05 = new Scene05(this.vthree.renderer,this.gui);
+                this.post = new PostProcessingTest(this.vthree.renderer,this.gui);
 
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
+                this.vthree.addScene(this.post);
                 // this.vthree.addScene(this.scene05);
-                this.vthree.addScene(this.scene01);
+                // this.vthree.addScene(this.scene01);
                 this.vthree.draw();
 
                 this.vthree.isUpdate = true;
@@ -68,7 +96,7 @@ class Main
             });
         });
     }
-    
+
 
     public  update(time) {
         requestAnimationFrame(this.update.bind(this));

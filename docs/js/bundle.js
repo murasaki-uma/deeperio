@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 36);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -9892,8 +9892,8 @@ return jQuery;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(35);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_dat_gui__);
 
 
@@ -9944,227 +9944,11 @@ var GUI = (function () {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-// *********** ひとつめのシーン *********** //
-var Scene01 = (function () {
-    // ******************************************************
-    function Scene01(renderer, gui) {
-        var _this = this;
-        this.uniforms = [];
-        this.pal_objects = [];
-        this.TEXTURE_WIDTH = 320;
-        this.TEXTURE_HEIGHT = 320;
-        this.isMoveToFront_Pal = false;
-        this.translateZ_pal = 0;
-        this.isImageUpdate = false;
-        this.replaceShader_WireWave = function (object, isTransparent, isWire) {
-            // let materials = object.children[0].material.materials;
-            var materials = object.children[0].children[0].material.materials;
-            console.log(materials);
-            for (var i = 0; i < materials.length; i++) {
-                //let img = materials[i].map.image.src;//.attributes.currentSrc;
-                console.log(materials[i]);
-                console.log(materials[i].map);
-                console.log(materials[i].map.image);
-                var img = materials[i].map.image.currentSrc;
-                var _uniforms = {
-                    time: { value: 1.0 },
-                    texture: { value: new THREE.TextureLoader().load(img) },
-                    transparent: { value: isTransparent },
-                    threshold: { value: 0 },
-                    texturePosition: { value: null }
-                };
-                _this.uniforms.push(_uniforms);
-                // materials[i].wireframe = true;
-                materials[i] = new THREE.ShaderMaterial({
-                    uniforms: _uniforms,
-                    vertexShader: document.getElementById("vertex_pal").textContent,
-                    fragmentShader: document.getElementById("fragment_pal").textContent,
-                    wireframe: isWire,
-                    transparent: true,
-                    side: THREE.DoubleSide
-                    // drawBuffer:true
-                });
-            }
-            return object;
-        };
-        this.renderer = renderer;
-        this.createScene();
-        this.createImage();
-        this.gui = gui;
-        console.log("scene created!");
-    }
-    // ******************************************************
-    Scene01.prototype.createScene = function () {
-        var _this = this;
-        this.scene = new THREE.Scene();
-        // 立方体のジオメトリーを作成
-        this.geometry = new THREE.BoxGeometry(1, 1, 1);
-        // 緑のマテリアルを作成
-        this.material = new THREE.MeshStandardMaterial({
-            roughness: 0.7,
-            color: 0xffffff,
-            bumpScale: 0.002,
-            metalness: 0.2
-        });
-        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        this.cube = new THREE.Mesh(this.geometry, this.material);
-        // メッシュをシーンに追加
-        this.scene.add(this.cube);
-        var ambient = new THREE.AmbientLight(0xffffff);
-        this.scene.add(ambient);
-        var dLight = new THREE.DirectionalLight(0xffffff, 0.2);
-        dLight.position.set(0, 1, 0).normalize();
-        this.scene.add(dLight);
-        var directionalLight = new THREE.DirectionalLight(0xffeedd);
-        directionalLight.position.set(0, 0, 1).normalize();
-        this.scene.add(directionalLight);
-        var onProgress = function (xhr) {
-            if (xhr.lengthComputable) {
-                var percentComplete = xhr.loaded / xhr.total * 100;
-                console.log(Math.round(percentComplete, 2) + '% downloaded');
-            }
-        };
-        var onError = function (xhr) {
-        };
-        var loader = new THREE.ColladaLoader();
-        loader.options.convertUpAxis = true;
-        for (var i = 0; i < 1; i++) {
-            loader.load('./models/pal/pal.dae', function (collada) {
-                var object = collada.scene;
-                console.log(object);
-                object.position.y = -1;
-                object.position.x = 0;
-                //object.rotation.y = 0.08 + Math.PI;
-                _this.pal_objects.push(object);
-                _this.scene.add(object);
-            }, onProgress, onError);
-        }
-        // カメラを作成
-        this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // カメラ位置を設定
-        this.scene.scale.set(1.2, 1, 1);
-        this.camera.position.z = 30;
-        this.initComputeRenderer();
-    };
-    Scene01.prototype.initComputeRenderer = function () {
-        this.gpuCompute = new GPUComputationRenderer(this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer);
-        console.log(this.gpuCompute);
-        var dtPosition = this.gpuCompute.createTexture();
-        this.fillTexture(dtPosition);
-        this.positionVariable = this.gpuCompute.addVariable("texturePosition", document.getElementById('computeShaderPosition').textContent, dtPosition);
-        this.gpuCompute.setVariableDependencies(this.positionVariable, [this.positionVariable]);
-        var error = this.gpuCompute.init();
-        if (error !== null) {
-            console.error(error);
-        }
-    };
-    Scene01.prototype.fillTexture = function (texturePosition) {
-        var posArray = texturePosition.image.data;
-        for (var k = 0, k1 = posArray.length; k < k1; k += 4) {
-            var x, y, z;
-            x = 0;
-            y = 0;
-            z = 0;
-            posArray[k + 0] = x;
-            posArray[k + 1] = y;
-            posArray[k + 2] = z;
-            posArray[k + 3] = 0;
-        }
-    };
-    // ******************************************************
-    Scene01.prototype.keyUp = function (e) {
-    };
-    Scene01.prototype.click = function () {
-        this.replaceShader_WireWave(this.pal_objects[0], 0, false);
-        // this.replaceShader_WireWave(this.pal_objects[1],1,false);
-    };
-    Scene01.prototype.createImage = function () {
-        this.image_uniform = {
-            texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
-            time: { value: 0.0 },
-            noiseSeed: { value: 0.1 },
-            noiseScale: { value: 0.1 },
-            time_scale_vertex: { value: 0.0 },
-            noiseSeed_vertex: { value: 0.1 },
-            noiseScale_vertex: { value: 0.1 },
-            distance_threshold: { value: 0.3 },
-            display: { value: true }
-        };
-        // 立方体のジオメトリーを作成
-        this.plane_geometry = new THREE.PlaneGeometry(1, window.innerHeight / window.innerWidth, 100, 100);
-        // 緑のマテリアルを作成
-        this.plane_material = new THREE.ShaderMaterial({
-            uniforms: this.image_uniform,
-            vertexShader: document.getElementById('imageVertexShader').textContent,
-            fragmentShader: document.getElementById('imageFragmentShader').textContent,
-            side: THREE.DoubleSide
-        });
-        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
-        this.plane = new THREE.Mesh(this.plane_geometry, this.plane_material);
-        // メッシュをシーンに追加
-        this.scene.add(this.plane);
-    };
-    // ******************************************************
-    Scene01.prototype.keyDown = function (e) {
-        if (e.key == "p") {
-            this.image_uniform.display.value = !this.image_uniform.display.value;
-        }
-        if (e.key == "m") {
-            this.isMoveToFront_Pal = !this.isMoveToFront_Pal;
-        }
-    };
-    // ******************************************************
-    Scene01.prototype.mouseMove = function (e) {
-    };
-    // ******************************************************
-    Scene01.prototype.onMouseDown = function (e) {
-    };
-    // ******************************************************
-    Scene01.prototype.update = function (time) {
-        this.gpuCompute.compute();
-        this.cube.position.z = this.gui.parameters.threshold;
-        this.cube.scale.set(0, 0, 0);
-        var timerStep = 0.004;
-        for (var i = 0; i < this.uniforms.length; i++) {
-            //console.log(this.uniforms[i]);
-            this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
-            this.uniforms[i].time.value += timerStep;
-            // this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
-        }
-        if (this.isMoveToFront_Pal) {
-            this.translateZ_pal += timerStep;
-            this.pal_objects[0].translateZ(this.translateZ_pal * 0.04);
-        }
-        if (this.isImageUpdate) {
-            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-            this.image_uniform.time.value += this.gui.parameters.image_speed;
-            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
-            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
-            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
-            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
-        }
-        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, this.gui.parameters.image_positionZ);
-        this.plane.scale.set(14, 14, 14);
-        //this.scene.position.z += 0.1;
-        // this.cube.rotation.x += 0.1;
-        // this.cube.rotation.y += 0.1;
-    };
-    return Scene01;
-}());
-/* harmony default export */ __webpack_exports__["a"] = (Scene01);
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__);
-var Stats = __webpack_require__(13);
+var Stats = __webpack_require__(33);
 
 
 var VThree = (function () {
@@ -10355,7 +10139,9 @@ var VThree = (function () {
     VThree.prototype.draw = function (time) {
         this.stats.update(time);
         this.scenes[this.NUM].update(time, this.isUpdate);
-        this.renderer.render(this.scenes[this.NUM].scene, this.scenes[this.NUM].camera);
+        if (!this.scenes[this.NUM].isPostProcessing) {
+            this.renderer.render(this.scenes[this.NUM].scene, this.scenes[this.NUM].camera);
+        }
         if (this.isUpdate) {
             requestAnimationFrame(this.draw.bind(this));
         }
@@ -10363,6 +10149,82 @@ var VThree = (function () {
     return VThree;
 }());
 /* harmony default export */ __webpack_exports__["a"] = (VThree);
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+var PostProcessingTest = (function () {
+    // ******************************************************
+    function PostProcessingTest(renderer, gui) {
+        this.width = window.innerWidth || 2;
+        this.height = window.innerHeight || 2;
+        this.isPostProcessing = true;
+        this.gui = gui;
+        this.renderer = renderer;
+        this.createScene();
+        console.log("scene created!");
+    }
+    PostProcessingTest.prototype.updateOptions = function () {
+        // var wildGlitch = document.getElementById('wildGlitch');
+        // this.glitchPass.goWild=wildGlitch.checked;
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.createScene = function () {
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+        this.camera.position.z = 400;
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.Fog(0x000000, 1, 1000);
+        this.object = new THREE.Object3D();
+        this.scene.add(this.object);
+        var geometry = new THREE.SphereGeometry(1, 4, 4);
+        for (var i = 0; i < 100; i++) {
+            var material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random(), shading: THREE.FlatShading });
+            var mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+            mesh.position.multiplyScalar(Math.random() * 400);
+            mesh.rotation.set(Math.random() * 2, Math.random() * 2, Math.random() * 2);
+            mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 50;
+            this.object.add(mesh);
+        }
+        this.scene.add(new THREE.AmbientLight(0x222222));
+        this.light = new THREE.DirectionalLight(0xffffff);
+        this.light.position.set(1, 1, 1);
+        this.scene.add(this.light);
+        this.composer = new THREE.EffectComposer(this.renderer);
+        this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
+        this.glitchPass = new THREE.GlitchPass();
+        this.glitchPass.renderToScreen = true;
+        this.composer.addPass(this.glitchPass);
+        // this.updateOptions();
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.click = function () {
+        this.isPostProcessing = !this.isPostProcessing;
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.keyUp = function (e) {
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.mouseMove = function (e) {
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.keyDown = function (e) {
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.onMouseDown = function (e) {
+    };
+    // ******************************************************
+    PostProcessingTest.prototype.update = function (time) {
+        this.object.rotation.x += 0.005;
+        this.object.rotation.y += 0.01;
+        this.composer.render();
+    };
+    return PostProcessingTest;
+}());
+/* harmony default export */ __webpack_exports__["a"] = (PostProcessingTest);
 
 
 /***/ }),
@@ -21111,13 +20973,1725 @@ THREE.OBJLoader.prototype = {
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-module.exports = __webpack_require__(12)
-module.exports.color = __webpack_require__(11)
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.BloomPass = function ( strength, kernelSize, sigma, resolution ) {
+
+	THREE.Pass.call( this );
+
+	strength = ( strength !== undefined ) ? strength : 1;
+	kernelSize = ( kernelSize !== undefined ) ? kernelSize : 25;
+	sigma = ( sigma !== undefined ) ? sigma : 4.0;
+	resolution = ( resolution !== undefined ) ? resolution : 256;
+
+	// render targets
+
+	var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat };
+
+	this.renderTargetX = new THREE.WebGLRenderTarget( resolution, resolution, pars );
+	this.renderTargetY = new THREE.WebGLRenderTarget( resolution, resolution, pars );
+
+	// copy material
+
+	if ( THREE.CopyShader === undefined )
+		console.error( "THREE.BloomPass relies on THREE.CopyShader" );
+
+	var copyShader = THREE.CopyShader;
+
+	this.copyUniforms = THREE.UniformsUtils.clone( copyShader.uniforms );
+
+	this.copyUniforms[ "opacity" ].value = strength;
+
+	this.materialCopy = new THREE.ShaderMaterial( {
+
+		uniforms: this.copyUniforms,
+		vertexShader: copyShader.vertexShader,
+		fragmentShader: copyShader.fragmentShader,
+		blending: THREE.AdditiveBlending,
+		transparent: true
+
+	} );
+
+	// convolution material
+
+	if ( THREE.ConvolutionShader === undefined )
+		console.error( "THREE.BloomPass relies on THREE.ConvolutionShader" );
+
+	var convolutionShader = THREE.ConvolutionShader;
+
+	this.convolutionUniforms = THREE.UniformsUtils.clone( convolutionShader.uniforms );
+
+	this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurX;
+	this.convolutionUniforms[ "cKernel" ].value = THREE.ConvolutionShader.buildKernel( sigma );
+
+	this.materialConvolution = new THREE.ShaderMaterial( {
+
+		uniforms: this.convolutionUniforms,
+		vertexShader:  convolutionShader.vertexShader,
+		fragmentShader: convolutionShader.fragmentShader,
+		defines: {
+			"KERNEL_SIZE_FLOAT": kernelSize.toFixed( 1 ),
+			"KERNEL_SIZE_INT": kernelSize.toFixed( 0 )
+		}
+
+	} );
+
+	this.needsSwap = false;
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+};
+
+THREE.BloomPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.BloomPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		if ( maskActive ) renderer.context.disable( renderer.context.STENCIL_TEST );
+
+		// Render quad with blured scene into texture (convolution pass 1)
+
+		this.quad.material = this.materialConvolution;
+
+		this.convolutionUniforms[ "tDiffuse" ].value = readBuffer.texture;
+		this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurX;
+
+		renderer.render( this.scene, this.camera, this.renderTargetX, true );
+
+
+		// Render quad with blured scene into texture (convolution pass 2)
+
+		this.convolutionUniforms[ "tDiffuse" ].value = this.renderTargetX.texture;
+		this.convolutionUniforms[ "uImageIncrement" ].value = THREE.BloomPass.blurY;
+
+		renderer.render( this.scene, this.camera, this.renderTargetY, true );
+
+		// Render original scene with superimposed blur to texture
+
+		this.quad.material = this.materialCopy;
+
+		this.copyUniforms[ "tDiffuse" ].value = this.renderTargetY.texture;
+
+		if ( maskActive ) renderer.context.enable( renderer.context.STENCIL_TEST );
+
+		renderer.render( this.scene, this.camera, readBuffer, this.clear );
+
+	}
+
+} );
+
+THREE.BloomPass.blurX = new THREE.Vector2( 0.001953125, 0.0 );
+THREE.BloomPass.blurY = new THREE.Vector2( 0.0, 0.001953125 );
+
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.DotScreenPass = function ( center, angle, scale ) {
+
+	THREE.Pass.call( this );
+
+	if ( THREE.DotScreenShader === undefined )
+		console.error( "THREE.DotScreenPass relies on THREE.DotScreenShader" );
+
+	var shader = THREE.DotScreenShader;
+
+	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	if ( center !== undefined ) this.uniforms[ "center" ].value.copy( center );
+	if ( angle !== undefined ) this.uniforms[ "angle" ].value = angle;
+	if ( scale !== undefined ) this.uniforms[ "scale" ].value = scale;
+
+	this.material = new THREE.ShaderMaterial( {
+
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader
+
+	} );
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+};
+
+THREE.DotScreenPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.DotScreenPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		this.uniforms[ "tDiffuse" ].value = readBuffer.texture;
+		this.uniforms[ "tSize" ].value.set( readBuffer.width, readBuffer.height );
+
+		this.quad.material = this.material;
+
+		if ( this.renderToScreen ) {
+
+			renderer.render( this.scene, this.camera );
+
+		} else {
+
+			renderer.render( this.scene, this.camera, writeBuffer, this.clear );
+
+		}
+
+	}
+
+} );
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.EffectComposer = function ( renderer, renderTarget ) {
+
+	this.renderer = renderer;
+
+	if ( renderTarget === undefined ) {
+
+		var parameters = {
+			minFilter: THREE.LinearFilter,
+			magFilter: THREE.LinearFilter,
+			format: THREE.RGBAFormat,
+			stencilBuffer: false
+		};
+		var size = renderer.getSize();
+		renderTarget = new THREE.WebGLRenderTarget( size.width, size.height, parameters );
+
+	}
+
+	this.renderTarget1 = renderTarget;
+	this.renderTarget2 = renderTarget.clone();
+
+	this.writeBuffer = this.renderTarget1;
+	this.readBuffer = this.renderTarget2;
+
+	this.passes = [];
+
+	if ( THREE.CopyShader === undefined )
+		console.error( "THREE.EffectComposer relies on THREE.CopyShader" );
+
+	this.copyPass = new THREE.ShaderPass( THREE.CopyShader );
+
+};
+
+Object.assign( THREE.EffectComposer.prototype, {
+
+	swapBuffers: function() {
+
+		var tmp = this.readBuffer;
+		this.readBuffer = this.writeBuffer;
+		this.writeBuffer = tmp;
+
+	},
+
+	addPass: function ( pass ) {
+
+		this.passes.push( pass );
+
+		var size = this.renderer.getSize();
+		pass.setSize( size.width, size.height );
+
+	},
+
+	insertPass: function ( pass, index ) {
+
+		this.passes.splice( index, 0, pass );
+
+	},
+
+	render: function ( delta ) {
+
+		var maskActive = false;
+
+		var pass, i, il = this.passes.length;
+
+		for ( i = 0; i < il; i ++ ) {
+
+			pass = this.passes[ i ];
+
+			if ( pass.enabled === false ) continue;
+
+			pass.render( this.renderer, this.writeBuffer, this.readBuffer, delta, maskActive );
+
+			if ( pass.needsSwap ) {
+
+				if ( maskActive ) {
+
+					var context = this.renderer.context;
+
+					context.stencilFunc( context.NOTEQUAL, 1, 0xffffffff );
+
+					this.copyPass.render( this.renderer, this.writeBuffer, this.readBuffer, delta );
+
+					context.stencilFunc( context.EQUAL, 1, 0xffffffff );
+
+				}
+
+				this.swapBuffers();
+
+			}
+
+			if ( THREE.MaskPass !== undefined ) {
+
+				if ( pass instanceof THREE.MaskPass ) {
+
+					maskActive = true;
+
+				} else if ( pass instanceof THREE.ClearMaskPass ) {
+
+					maskActive = false;
+
+				}
+
+			}
+
+		}
+
+	},
+
+	reset: function ( renderTarget ) {
+
+		if ( renderTarget === undefined ) {
+
+			var size = this.renderer.getSize();
+
+			renderTarget = this.renderTarget1.clone();
+			renderTarget.setSize( size.width, size.height );
+
+		}
+
+		this.renderTarget1.dispose();
+		this.renderTarget2.dispose();
+		this.renderTarget1 = renderTarget;
+		this.renderTarget2 = renderTarget.clone();
+
+		this.writeBuffer = this.renderTarget1;
+		this.readBuffer = this.renderTarget2;
+
+	},
+
+	setSize: function ( width, height ) {
+
+		this.renderTarget1.setSize( width, height );
+		this.renderTarget2.setSize( width, height );
+
+		for ( var i = 0; i < this.passes.length; i ++ ) {
+
+			this.passes[i].setSize( width, height );
+
+		}
+
+	}
+
+} );
+
+
+THREE.Pass = function () {
+
+	// if set to true, the pass is processed by the composer
+	this.enabled = true;
+
+	// if set to true, the pass indicates to swap read and write buffer after rendering
+	this.needsSwap = true;
+
+	// if set to true, the pass clears its buffer before rendering
+	this.clear = false;
+
+	// if set to true, the result of the pass is rendered to screen
+	this.renderToScreen = false;
+
+};
+
+Object.assign( THREE.Pass.prototype, {
+
+	setSize: function( width, height ) {},
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		console.error( "THREE.Pass: .render() must be implemented in derived pass." );
+
+	}
+
+} );
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.FilmPass = function ( noiseIntensity, scanlinesIntensity, scanlinesCount, grayscale ) {
+
+	THREE.Pass.call( this );
+
+	if ( THREE.FilmShader === undefined )
+		console.error( "THREE.FilmPass relies on THREE.FilmShader" );
+
+	var shader = THREE.FilmShader;
+
+	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	this.material = new THREE.ShaderMaterial( {
+
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader
+
+	} );
+
+	if ( grayscale !== undefined )	this.uniforms.grayscale.value = grayscale;
+	if ( noiseIntensity !== undefined ) this.uniforms.nIntensity.value = noiseIntensity;
+	if ( scanlinesIntensity !== undefined ) this.uniforms.sIntensity.value = scanlinesIntensity;
+	if ( scanlinesCount !== undefined ) this.uniforms.sCount.value = scanlinesCount;
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+};
+
+THREE.FilmPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.FilmPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		this.uniforms[ "tDiffuse" ].value = readBuffer.texture;
+		this.uniforms[ "time" ].value += delta;
+
+		this.quad.material = this.material;
+
+		if ( this.renderToScreen ) {
+
+			renderer.render( this.scene, this.camera );
+
+		} else {
+
+			renderer.render( this.scene, this.camera, writeBuffer, this.clear );
+
+		}
+
+	}
+
+} );
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.GlitchPass = function ( dt_size ) {
+
+	THREE.Pass.call( this );
+
+	if ( THREE.DigitalGlitch === undefined ) console.error( "THREE.GlitchPass relies on THREE.DigitalGlitch" );
+
+	var shader = THREE.DigitalGlitch;
+	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	if ( dt_size == undefined ) dt_size = 64;
+
+
+	this.uniforms[ "tDisp" ].value = this.generateHeightmap( dt_size );
+
+
+	this.material = new THREE.ShaderMaterial( {
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader
+	} );
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+	this.goWild = false;
+	this.curF = 0;
+	this.generateTrigger();
+
+};
+
+THREE.GlitchPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.GlitchPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		this.uniforms[ "tDiffuse" ].value = readBuffer.texture;
+		this.uniforms[ 'seed' ].value = Math.random();//default seeding
+		this.uniforms[ 'byp' ].value = 0;
+
+		if ( this.curF % this.randX == 0 || this.goWild == true ) {
+
+			this.uniforms[ 'amount' ].value = Math.random() / 30;
+			this.uniforms[ 'angle' ].value = THREE.Math.randFloat( - Math.PI, Math.PI );
+			this.uniforms[ 'seed_x' ].value = THREE.Math.randFloat( - 1, 1 );
+			this.uniforms[ 'seed_y' ].value = THREE.Math.randFloat( - 1, 1 );
+			this.uniforms[ 'distortion_x' ].value = THREE.Math.randFloat( 0, 1 );
+			this.uniforms[ 'distortion_y' ].value = THREE.Math.randFloat( 0, 1 );
+			this.curF = 0;
+			this.generateTrigger();
+
+		} else if ( this.curF % this.randX < this.randX / 5 ) {
+
+			this.uniforms[ 'amount' ].value = Math.random() / 90;
+			this.uniforms[ 'angle' ].value = THREE.Math.randFloat( - Math.PI, Math.PI );
+			this.uniforms[ 'distortion_x' ].value = THREE.Math.randFloat( 0, 1 );
+			this.uniforms[ 'distortion_y' ].value = THREE.Math.randFloat( 0, 1 );
+			this.uniforms[ 'seed_x' ].value = THREE.Math.randFloat( - 0.3, 0.3 );
+			this.uniforms[ 'seed_y' ].value = THREE.Math.randFloat( - 0.3, 0.3 );
+
+		} else if ( this.goWild == false ) {
+
+			this.uniforms[ 'byp' ].value = 1;
+
+		}
+
+		this.curF ++;
+		this.quad.material = this.material;
+
+		if ( this.renderToScreen ) {
+
+			renderer.render( this.scene, this.camera );
+
+		} else {
+
+			renderer.render( this.scene, this.camera, writeBuffer, this.clear );
+
+		}
+
+	},
+
+	generateTrigger: function() {
+
+		this.randX = THREE.Math.randInt( 120, 240 );
+
+	},
+
+	generateHeightmap: function( dt_size ) {
+
+		var data_arr = new Float32Array( dt_size * dt_size * 3 );
+		var length = dt_size * dt_size;
+
+		for ( var i = 0; i < length; i ++ ) {
+
+			var val = THREE.Math.randFloat( 0, 1 );
+			data_arr[ i * 3 + 0 ] = val;
+			data_arr[ i * 3 + 1 ] = val;
+			data_arr[ i * 3 + 2 ] = val;
+
+		}
+
+		var texture = new THREE.DataTexture( data_arr, dt_size, dt_size, THREE.RGBFormat, THREE.FloatType );
+		texture.needsUpdate = true;
+		return texture;
+
+	}
+
+} );
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.MaskPass = function ( scene, camera ) {
+
+	THREE.Pass.call( this );
+
+	this.scene = scene;
+	this.camera = camera;
+
+	this.clear = true;
+	this.needsSwap = false;
+
+	this.inverse = false;
+
+};
+
+THREE.MaskPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.MaskPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		var context = renderer.context;
+		var state = renderer.state;
+
+		// don't update color or depth
+
+		state.buffers.color.setMask( false );
+		state.buffers.depth.setMask( false );
+
+		// lock buffers
+
+		state.buffers.color.setLocked( true );
+		state.buffers.depth.setLocked( true );
+
+		// set up stencil
+
+		var writeValue, clearValue;
+
+		if ( this.inverse ) {
+
+			writeValue = 0;
+			clearValue = 1;
+
+		} else {
+
+			writeValue = 1;
+			clearValue = 0;
+
+		}
+
+		state.buffers.stencil.setTest( true );
+		state.buffers.stencil.setOp( context.REPLACE, context.REPLACE, context.REPLACE );
+		state.buffers.stencil.setFunc( context.ALWAYS, writeValue, 0xffffffff );
+		state.buffers.stencil.setClear( clearValue );
+
+		// draw into the stencil buffer
+
+		renderer.render( this.scene, this.camera, readBuffer, this.clear );
+		renderer.render( this.scene, this.camera, writeBuffer, this.clear );
+
+		// unlock color and depth buffer for subsequent rendering
+
+		state.buffers.color.setLocked( false );
+		state.buffers.depth.setLocked( false );
+
+		// only render where stencil is set to 1
+
+		state.buffers.stencil.setFunc( context.EQUAL, 1, 0xffffffff );  // draw if == 1
+		state.buffers.stencil.setOp( context.KEEP, context.KEEP, context.KEEP );
+
+	}
+
+} );
+
+
+THREE.ClearMaskPass = function () {
+
+	THREE.Pass.call( this );
+
+	this.needsSwap = false;
+
+};
+
+THREE.ClearMaskPass.prototype = Object.create( THREE.Pass.prototype );
+
+Object.assign( THREE.ClearMaskPass.prototype, {
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		renderer.state.buffers.stencil.setTest( false );
+
+	}
+
+} );
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.RenderPass = function ( scene, camera, overrideMaterial, clearColor, clearAlpha ) {
+
+	THREE.Pass.call( this );
+
+	this.scene = scene;
+	this.camera = camera;
+
+	this.overrideMaterial = overrideMaterial;
+
+	this.clearColor = clearColor;
+	this.clearAlpha = ( clearAlpha !== undefined ) ? clearAlpha : 0;
+
+	this.clear = true;
+	this.clearDepth = false;
+	this.needsSwap = false;
+
+};
+
+THREE.RenderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.RenderPass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		var oldAutoClear = renderer.autoClear;
+		renderer.autoClear = false;
+
+		this.scene.overrideMaterial = this.overrideMaterial;
+
+		var oldClearColor, oldClearAlpha;
+
+		if ( this.clearColor ) {
+
+			oldClearColor = renderer.getClearColor().getHex();
+			oldClearAlpha = renderer.getClearAlpha();
+
+			renderer.setClearColor( this.clearColor, this.clearAlpha );
+
+		}
+
+		if ( this.clearDepth ) {
+
+			renderer.clearDepth();
+
+		}
+
+		renderer.render( this.scene, this.camera, this.renderToScreen ? null : readBuffer, this.clear );
+
+		if ( this.clearColor ) {
+
+			renderer.setClearColor( oldClearColor, oldClearAlpha );
+
+		}
+
+		this.scene.overrideMaterial = null;
+		renderer.autoClear = oldAutoClear;
+	}
+
+} );
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.ShaderPass = function ( shader, textureID ) {
+
+	THREE.Pass.call( this );
+
+	this.textureID = ( textureID !== undefined ) ? textureID : "tDiffuse";
+
+	if ( shader instanceof THREE.ShaderMaterial ) {
+
+		this.uniforms = shader.uniforms;
+
+		this.material = shader;
+
+	} else if ( shader ) {
+
+		this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+		this.material = new THREE.ShaderMaterial( {
+
+			defines: shader.defines || {},
+			uniforms: this.uniforms,
+			vertexShader: shader.vertexShader,
+			fragmentShader: shader.fragmentShader
+
+		} );
+
+	}
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+};
+
+THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.ShaderPass,
+
+	render: function( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		if ( this.uniforms[ this.textureID ] ) {
+
+			this.uniforms[ this.textureID ].value = readBuffer.texture;
+
+		}
+
+		this.quad.material = this.material;
+
+		if ( this.renderToScreen ) {
+
+			renderer.render( this.scene, this.camera );
+
+		} else {
+
+			renderer.render( this.scene, this.camera, writeBuffer, this.clear );
+
+		}
+
+	}
+
+} );
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ */
+
+THREE.TexturePass = function ( map, opacity ) {
+
+	THREE.Pass.call( this );
+
+	if ( THREE.CopyShader === undefined )
+		console.error( "THREE.TexturePass relies on THREE.CopyShader" );
+
+	var shader = THREE.CopyShader;
+
+	this.map = map;
+	this.opacity = ( opacity !== undefined ) ? opacity : 1.0;
+
+	this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+
+	this.material = new THREE.ShaderMaterial( {
+
+		uniforms: this.uniforms,
+		vertexShader: shader.vertexShader,
+		fragmentShader: shader.fragmentShader,
+		depthTest: false,
+		depthWrite: false
+
+	} );
+
+	this.needsSwap = false;
+
+	this.camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+	this.scene  = new THREE.Scene();
+
+	this.quad = new THREE.Mesh( new THREE.PlaneBufferGeometry( 2, 2 ), null );
+	this.quad.frustumCulled = false; // Avoid getting clipped
+	this.scene.add( this.quad );
+
+};
+
+THREE.TexturePass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+
+	constructor: THREE.TexturePass,
+
+	render: function ( renderer, writeBuffer, readBuffer, delta, maskActive ) {
+
+		var oldAutoClear = renderer.autoClear;
+		renderer.autoClear = false;
+
+		this.quad.material = this.material;
+
+		this.uniforms[ "opacity" ].value = this.opacity;
+		this.uniforms[ "tDiffuse" ].value = this.map;
+		this.material.transparent = ( this.opacity < 1.0 );
+
+		renderer.render( this.scene, this.camera, this.renderToScreen ? null : readBuffer, this.clear );
+
+		renderer.autoClear = oldAutoClear;
+	}
+
+} );
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Bleach bypass shader [http://en.wikipedia.org/wiki/Bleach_bypass]
+ * - based on Nvidia example
+ * http://developer.download.nvidia.com/shaderlibrary/webpages/shader_library.html#post_bleach_bypass
+ */
+
+THREE.BleachBypassShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"opacity":  { value: 1.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform float opacity;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 base = texture2D( tDiffuse, vUv );",
+
+			"vec3 lumCoeff = vec3( 0.25, 0.65, 0.1 );",
+			"float lum = dot( lumCoeff, base.rgb );",
+			"vec3 blend = vec3( lum );",
+
+			"float L = min( 1.0, max( 0.0, 10.0 * ( lum - 0.45 ) ) );",
+
+			"vec3 result1 = 2.0 * base.rgb * blend;",
+			"vec3 result2 = 1.0 - 2.0 * ( 1.0 - blend ) * ( 1.0 - base.rgb );",
+
+			"vec3 newColor = mix( result1, result2, L );",
+
+			"float A2 = opacity * base.a;",
+			"vec3 mixRGB = A2 * newColor.rgb;",
+			"mixRGB += ( ( 1.0 - A2 ) * base.rgb );",
+
+			"gl_FragColor = vec4( mixRGB, base.a );",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Colorify shader
+ */
+
+THREE.ColorifyShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"color":    { value: new THREE.Color( 0xffffff ) }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform vec3 color;",
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 texel = texture2D( tDiffuse, vUv );",
+
+			"vec3 luma = vec3( 0.299, 0.587, 0.114 );",
+			"float v = dot( texel.xyz, luma );",
+
+			"gl_FragColor = vec4( v * color, texel.w );",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Convolution shader
+ * ported from o3d sample to WebGL / GLSL
+ * http://o3d.googlecode.com/svn/trunk/samples/convolution.html
+ */
+
+THREE.ConvolutionShader = {
+
+	defines: {
+
+		"KERNEL_SIZE_FLOAT": "25.0",
+		"KERNEL_SIZE_INT": "25"
+
+	},
+
+	uniforms: {
+
+		"tDiffuse":        { value: null },
+		"uImageIncrement": { value: new THREE.Vector2( 0.001953125, 0.0 ) },
+		"cKernel":         { value: [] }
+
+	},
+
+	vertexShader: [
+
+		"uniform vec2 uImageIncrement;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv - ( ( KERNEL_SIZE_FLOAT - 1.0 ) / 2.0 ) * uImageIncrement;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform float cKernel[ KERNEL_SIZE_INT ];",
+
+		"uniform sampler2D tDiffuse;",
+		"uniform vec2 uImageIncrement;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec2 imageCoord = vUv;",
+			"vec4 sum = vec4( 0.0, 0.0, 0.0, 0.0 );",
+
+			"for( int i = 0; i < KERNEL_SIZE_INT; i ++ ) {",
+
+				"sum += texture2D( tDiffuse, imageCoord ) * cKernel[ i ];",
+				"imageCoord += uImageIncrement;",
+
+			"}",
+
+			"gl_FragColor = sum;",
+
+		"}"
+
+
+	].join( "\n" ),
+
+	buildKernel: function ( sigma ) {
+
+		// We lop off the sqrt(2 * pi) * sigma term, since we're going to normalize anyway.
+
+		function gauss( x, sigma ) {
+
+			return Math.exp( - ( x * x ) / ( 2.0 * sigma * sigma ) );
+
+		}
+
+		var i, values, sum, halfWidth, kMaxKernelSize = 25, kernelSize = 2 * Math.ceil( sigma * 3.0 ) + 1;
+
+		if ( kernelSize > kMaxKernelSize ) kernelSize = kMaxKernelSize;
+		halfWidth = ( kernelSize - 1 ) * 0.5;
+
+		values = new Array( kernelSize );
+		sum = 0.0;
+		for ( i = 0; i < kernelSize; ++ i ) {
+
+			values[ i ] = gauss( i - halfWidth, sigma );
+			sum += values[ i ];
+
+		}
+
+		// normalize the kernel
+
+		for ( i = 0; i < kernelSize; ++ i ) values[ i ] /= sum;
+
+		return values;
+
+	}
+
+};
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Full-screen textured quad shader
+ */
+
+THREE.CopyShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"opacity":  { value: 1.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform float opacity;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 texel = texture2D( tDiffuse, vUv );",
+			"gl_FragColor = opacity * texel;",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+/**
+ * @author felixturner / http://airtight.cc/
+ *
+ * RGB Shift Shader
+ * Shifts red and blue channels from center in opposite directions
+ * Ported from http://kriss.cx/tom/2009/05/rgb-shift/
+ * by Tom Butterworth / http://kriss.cx/tom/
+ *
+ * amount: shift distance (1 is width of input)
+ * angle: shift angle in radians
+ */
+
+THREE.DigitalGlitch = {
+
+	uniforms: {
+
+		"tDiffuse":		{ value: null },//diffuse texture
+		"tDisp":		{ value: null },//displacement texture for digital glitch squares
+		"byp":			{ value: 0 },//apply the glitch ?
+		"amount":		{ value: 0.08 },
+		"angle":		{ value: 0.02 },
+		"seed":			{ value: 0.02 },
+		"seed_x":		{ value: 0.02 },//-1,1
+		"seed_y":		{ value: 0.02 },//-1,1
+		"distortion_x":	{ value: 0.5 },
+		"distortion_y":	{ value: 0.6 },
+		"col_s":		{ value: 0.05 }
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+		"void main() {",
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+		"}"
+	].join( "\n" ),
+
+	fragmentShader: [
+		"uniform int byp;",//should we apply the glitch ?
+		
+		"uniform sampler2D tDiffuse;",
+		"uniform sampler2D tDisp;",
+		
+		"uniform float amount;",
+		"uniform float angle;",
+		"uniform float seed;",
+		"uniform float seed_x;",
+		"uniform float seed_y;",
+		"uniform float distortion_x;",
+		"uniform float distortion_y;",
+		"uniform float col_s;",
+			
+		"varying vec2 vUv;",
+		
+		
+		"float rand(vec2 co){",
+			"return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);",
+		"}",
+				
+		"void main() {",
+			"//if(byp<1) {",
+				"vec2 p = vUv;",
+				"float xs = floor(gl_FragCoord.x / 0.5);",
+				"float ys = floor(gl_FragCoord.y / 0.5);",
+				//based on staffantans glitch shader for unity https://github.com/staffantan/unityglitch
+				"vec4 normal = texture2D (tDisp, p*seed*seed);",
+				"if(p.y<distortion_x+col_s && p.y>distortion_x-col_s*seed) {",
+					"if(seed_x>0.){",
+						"p.y = 1. - (p.y + distortion_y);",
+					"}",
+					"else {",
+						"p.y = distortion_y;",
+					"}",
+				"}",
+				"if(p.x<distortion_y+col_s && p.x>distortion_y-col_s*seed) {",
+					"if(seed_y>0.){",
+						"p.x=distortion_x;",
+					"}",
+					"else {",
+						"p.x = 1. - (p.x + distortion_x);",
+					"}",
+				"}",
+				"p.x+=normal.x*seed_x*(seed/5.);",
+				"p.y+=normal.y*seed_y*(seed/5.);",
+				//base from RGB shift shader
+				"vec2 offset = amount * vec2( cos(angle), sin(angle));",
+				"vec4 cr = texture2D(tDiffuse, p + offset);",
+				"vec4 cga = texture2D(tDiffuse, p);",
+				"vec4 cb = texture2D(tDiffuse, p - offset);",
+				"gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);",
+				//add noise
+				"vec4 snow = 200.*amount*vec4(rand(vec2(xs * seed,ys * seed*50.))*0.2);",
+				"gl_FragColor = gl_FragColor+ snow;",
+			"//}",
+			"//else {",
+				"//gl_FragColor=texture2D (tDiffuse, vUv);",
+			"//}",
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Dot screen shader
+ * based on glfx.js sepia shader
+ * https://github.com/evanw/glfx.js
+ */
+
+THREE.DotScreenShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"tSize":    { value: new THREE.Vector2( 256, 256 ) },
+		"center":   { value: new THREE.Vector2( 0.5, 0.5 ) },
+		"angle":    { value: 1.57 },
+		"scale":    { value: 1.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform vec2 center;",
+		"uniform float angle;",
+		"uniform float scale;",
+		"uniform vec2 tSize;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"float pattern() {",
+
+			"float s = sin( angle ), c = cos( angle );",
+
+			"vec2 tex = vUv * tSize - center;",
+			"vec2 point = vec2( c * tex.x - s * tex.y, s * tex.x + c * tex.y ) * scale;",
+
+			"return ( sin( point.x ) * sin( point.y ) ) * 4.0;",
+
+		"}",
+
+		"void main() {",
+
+			"vec4 color = texture2D( tDiffuse, vUv );",
+
+			"float average = ( color.r + color.g + color.b ) / 3.0;",
+
+			"gl_FragColor = vec4( vec3( average * 10.0 - 5.0 + pattern() ), color.a );",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Film grain & scanlines shader
+ *
+ * - ported from HLSL to WebGL / GLSL
+ * http://www.truevision3d.com/forums/showcase/staticnoise_colorblackwhite_scanline_shaders-t18698.0.html
+ *
+ * Screen Space Static Postprocessor
+ *
+ * Produces an analogue noise overlay similar to a film grain / TV static
+ *
+ * Original implementation and noise algorithm
+ * Pat 'Hawthorne' Shearon
+ *
+ * Optimized scanlines + noise version with intensity scaling
+ * Georg 'Leviathan' Steinrohder
+ *
+ * This version is provided under a Creative Commons Attribution 3.0 License
+ * http://creativecommons.org/licenses/by/3.0/
+ */
+
+THREE.FilmShader = {
+
+	uniforms: {
+
+		"tDiffuse":   { value: null },
+		"time":       { value: 0.0 },
+		"nIntensity": { value: 0.5 },
+		"sIntensity": { value: 0.05 },
+		"sCount":     { value: 4096 },
+		"grayscale":  { value: 1 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"#include <common>",
+		
+		// control parameter
+		"uniform float time;",
+
+		"uniform bool grayscale;",
+
+		// noise effect intensity value (0 = no effect, 1 = full effect)
+		"uniform float nIntensity;",
+
+		// scanlines effect intensity value (0 = no effect, 1 = full effect)
+		"uniform float sIntensity;",
+
+		// scanlines effect count value (0 = no effect, 4096 = full effect)
+		"uniform float sCount;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			// sample the source
+			"vec4 cTextureScreen = texture2D( tDiffuse, vUv );",
+
+			// make some noise
+			"float dx = rand( vUv + time );",
+
+			// add noise
+			"vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );",
+
+			// get us a sine and cosine
+			"vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );",
+
+			// add scanlines
+			"cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;",
+
+			// interpolate between source and result by intensity
+			"cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );",
+
+			// convert to grayscale if desired
+			"if( grayscale ) {",
+
+				"cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );",
+
+			"}",
+
+			"gl_FragColor =  vec4( cResult, cTextureScreen.a );",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports) {
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ *
+ * Two pass Gaussian blur filter (horizontal and vertical blur shaders)
+ * - described in http://www.gamerendering.com/2008/10/11/gaussian-blur-filter-shader/
+ *   and used in http://www.cake23.de/traveling-wavefronts-lit-up.html
+ *
+ * - 9 samples per pass
+ * - standard deviation 2.7
+ * - "h" and "v" parameters should be set to "1 / width" and "1 / height"
+ */
+
+THREE.HorizontalBlurShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"h":        { value: 1.0 / 512.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform sampler2D tDiffuse;",
+		"uniform float h;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 sum = vec4( 0.0 );",
+
+			"sum += texture2D( tDiffuse, vec2( vUv.x - 4.0 * h, vUv.y ) ) * 0.051;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x - 3.0 * h, vUv.y ) ) * 0.0918;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x - 2.0 * h, vUv.y ) ) * 0.12245;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x - 1.0 * h, vUv.y ) ) * 0.1531;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y ) ) * 0.1633;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x + 1.0 * h, vUv.y ) ) * 0.1531;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x + 2.0 * h, vUv.y ) ) * 0.12245;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x + 3.0 * h, vUv.y ) ) * 0.0918;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x + 4.0 * h, vUv.y ) ) * 0.051;",
+
+			"gl_FragColor = sum;",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Sepia tone shader
+ * based on glfx.js sepia shader
+ * https://github.com/evanw/glfx.js
+ */
+
+THREE.SepiaShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"amount":   { value: 1.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform float amount;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 color = texture2D( tDiffuse, vUv );",
+			"vec3 c = color.rgb;",
+
+			"color.r = dot( c, vec3( 1.0 - 0.607 * amount, 0.769 * amount, 0.189 * amount ) );",
+			"color.g = dot( c, vec3( 0.349 * amount, 1.0 - 0.314 * amount, 0.168 * amount ) );",
+			"color.b = dot( c, vec3( 0.272 * amount, 0.534 * amount, 1.0 - 0.869 * amount ) );",
+
+			"gl_FragColor = vec4( min( vec3( 1.0 ), color.rgb ), color.a );",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ *
+ * Two pass Gaussian blur filter (horizontal and vertical blur shaders)
+ * - described in http://www.gamerendering.com/2008/10/11/gaussian-blur-filter-shader/
+ *   and used in http://www.cake23.de/traveling-wavefronts-lit-up.html
+ *
+ * - 9 samples per pass
+ * - standard deviation 2.7
+ * - "h" and "v" parameters should be set to "1 / width" and "1 / height"
+ */
+
+THREE.VerticalBlurShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"v":        { value: 1.0 / 512.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform sampler2D tDiffuse;",
+		"uniform float v;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec4 sum = vec4( 0.0 );",
+
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 4.0 * v ) ) * 0.051;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 3.0 * v ) ) * 0.0918;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 2.0 * v ) ) * 0.12245;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y - 1.0 * v ) ) * 0.1531;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y ) ) * 0.1633;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 1.0 * v ) ) * 0.1531;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 2.0 * v ) ) * 0.12245;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 3.0 * v ) ) * 0.0918;",
+			"sum += texture2D( tDiffuse, vec2( vUv.x, vUv.y + 4.0 * v ) ) * 0.051;",
+
+			"gl_FragColor = sum;",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports) {
+
+/**
+ * @author alteredq / http://alteredqualia.com/
+ *
+ * Vignette shader
+ * based on PaintEffect postprocess from ro.me
+ * http://code.google.com/p/3-dreams-of-black/source/browse/deploy/js/effects/PaintEffect.js
+ */
+
+THREE.VignetteShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"offset":   { value: 1.0 },
+		"darkness": { value: 1.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform float offset;",
+		"uniform float darkness;",
+
+		"uniform sampler2D tDiffuse;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			// Eskil's vignette
+
+			"vec4 texel = texture2D( tDiffuse, vUv );",
+			"vec2 uv = ( vUv - vec2( 0.5 ) ) * vec2( offset );",
+			"gl_FragColor = vec4( mix( texel.rgb, vec3( 1.0 - darkness ), dot( uv, uv ) ), texel.a );",
+
+			/*
+			// alternative version from glfx.js
+			// this one makes more "dusty" look (as opposed to "burned")
+
+			"vec4 color = texture2D( tDiffuse, vUv );",
+			"float dist = distance( vUv, vec2( 0.5 ) );",
+			"color.rgb *= smoothstep( 0.8, offset * 0.799, dist *( darkness + offset ) );",
+			"gl_FragColor = color;",
+			*/
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(32)
+module.exports.color = __webpack_require__(31)
+
+/***/ }),
+/* 31 */
 /***/ (function(module, exports) {
 
 /**
@@ -21877,7 +23451,7 @@ dat.color.toString,
 dat.utils.common);
 
 /***/ }),
-/* 12 */
+/* 32 */
 /***/ (function(module, exports) {
 
 /**
@@ -25542,7 +27116,7 @@ dat.dom.dom,
 dat.utils.common);
 
 /***/ }),
-/* 13 */
+/* 33 */
 /***/ (function(module, exports) {
 
 // stats.js - http://github.com/mrdoob/stats.js
@@ -25554,7 +27128,7 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 
 
 /***/ }),
-/* 14 */
+/* 34 */
 /***/ (function(module, exports) {
 
 /**
@@ -26576,7 +28150,7 @@ Object.defineProperties( THREE.OrbitControls.prototype, {
 
 
 /***/ }),
-/* 15 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -26629,15 +28203,15 @@ var GUIParameters = (function () {
 
 
 /***/ }),
-/* 16 */
+/* 36 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene01__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__VThree__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__postprocessing_study__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__VThree__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__GUI__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__loaders_MTLLoader_js__ = __webpack_require__(8);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__loaders_MTLLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4__loaders_MTLLoader_js__);
@@ -26651,6 +28225,66 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__loaders_ColladaLoader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_8__loaders_ColladaLoader_js__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__GPUComputationRenderer_js__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__GPUComputationRenderer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9__GPUComputationRenderer_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__shaders_BleachBypassShader_js__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10__shaders_BleachBypassShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10__shaders_BleachBypassShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__shaders_ColorifyShader_js__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__shaders_ColorifyShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_11__shaders_ColorifyShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__shaders_ConvolutionShader_js__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_12__shaders_ConvolutionShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_12__shaders_ConvolutionShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__shaders_CopyShader_js__ = __webpack_require__(22);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_13__shaders_CopyShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_13__shaders_CopyShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__shaders_DotScreenShader_js__ = __webpack_require__(24);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_14__shaders_DotScreenShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_14__shaders_DotScreenShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__shaders_DigitalGlitch_js__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_15__shaders_DigitalGlitch_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_15__shaders_DigitalGlitch_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__shaders_FilmShader_js__ = __webpack_require__(25);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_16__shaders_FilmShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_16__shaders_FilmShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__shaders_HorizontalBlurShader_js__ = __webpack_require__(26);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_17__shaders_HorizontalBlurShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_17__shaders_HorizontalBlurShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__shaders_SepiaShader_js__ = __webpack_require__(27);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__shaders_SepiaShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_18__shaders_SepiaShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__shaders_VerticalBlurShader_js__ = __webpack_require__(28);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__shaders_VerticalBlurShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_19__shaders_VerticalBlurShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__shaders_VignetteShader_js__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__shaders_VignetteShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_20__shaders_VignetteShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__postprocessing_EffectComposer_js__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__postprocessing_EffectComposer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_21__postprocessing_EffectComposer_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__postprocessing_RenderPass_js__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__postprocessing_RenderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_22__postprocessing_RenderPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__postprocessing_BloomPass_js__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__postprocessing_BloomPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_23__postprocessing_BloomPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_FilmPass_js__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_FilmPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_24__postprocessing_FilmPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_DotScreenPass_js__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_DotScreenPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_25__postprocessing_DotScreenPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_TexturePass_js__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_TexturePass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_26__postprocessing_TexturePass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_ShaderPass_js__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_ShaderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_27__postprocessing_ShaderPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_MaskPass_js__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_MaskPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_28__postprocessing_MaskPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_GlitchPass_js__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_GlitchPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_29__postprocessing_GlitchPass_js__);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -26670,15 +28304,17 @@ var Main = (function () {
         __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/vthree.config.json", function (config) {
             __WEBPACK_IMPORTED_MODULE_0_jquery__["getJSON"]("json/guisetting.json", function (data) {
                 _this.vthree = new __WEBPACK_IMPORTED_MODULE_2__VThree__["a" /* default */](1.0, false, config);
-                _this.scene01 = new __WEBPACK_IMPORTED_MODULE_1__Scene01__["a" /* default */](_this.vthree.renderer, _this.gui);
+                // this.scene01 = new Scene01(this.vthree.renderer,this.gui);
                 // this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 // this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 // this.scene04 = new Scene04(this.vthree.renderer,this.gui);
                 // this.scene05 = new Scene05(this.vthree.renderer,this.gui);
+                _this.post = new __WEBPACK_IMPORTED_MODULE_1__postprocessing_study__["a" /* default */](_this.vthree.renderer, _this.gui);
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
+                _this.vthree.addScene(_this.post);
                 // this.vthree.addScene(this.scene05);
-                _this.vthree.addScene(_this.scene01);
+                // this.vthree.addScene(this.scene01);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続
