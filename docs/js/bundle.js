@@ -9950,15 +9950,19 @@ var Scene01 = (function () {
     function Scene01(renderer, gui) {
         var _this = this;
         this.uniforms = [];
+        this.materials = [];
         this.pal_objects = [];
         this.TEXTURE_WIDTH = 320;
         this.TEXTURE_HEIGHT = 320;
         this.isMoveToFront_Pal = false;
         this.translateZ_pal = 0;
+        this.glitchDist = 0.0;
         this.isImageUpdate = false;
+        this.time = 0;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             // let materials = object.children[0].material.materials;
             var materials = object.children[0].children[0].material.materials;
+            _this.materials = materials;
             console.log(materials);
             for (var i = 0; i < materials.length; i++) {
                 //let img = materials[i].map.image.src;//.attributes.currentSrc;
@@ -9972,7 +9976,9 @@ var Scene01 = (function () {
                     transparent: { value: isTransparent },
                     threshold: { value: 0 },
                     texturePosition: { value: null },
-                    isDisplay: { value: true }
+                    isDisplay: { value: true },
+                    glitchVec: { value: new THREE.Vector3(1, 0, 0) },
+                    glitchDist: { value: 0.0 }
                 };
                 _this.uniforms.push(_uniforms);
                 // materials[i].wireframe = true;
@@ -10118,6 +10124,21 @@ var Scene01 = (function () {
                 this.uniforms[i].isDisplay.value = !this.uniforms[i].isDisplay.value;
             }
         }
+        if (e.key == "w") {
+            if (Math.random() < 0.9) {
+                // this
+                for (var i = 0; i < this.materials.length; i++) {
+                    this.materials[i].wireframe = !this.materials[i].wireframe;
+                }
+                this.glitchDist += 0.04;
+                for (var i = 0; i < this.uniforms.length; i++) {
+                    if (this.glitchDist >= Math.PI / 2) {
+                        this.glitchDist = 0.0;
+                    }
+                    this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
+                }
+            }
+        }
     };
     // ******************************************************
     Scene01.prototype.mouseMove = function (e) {
@@ -10127,6 +10148,7 @@ var Scene01 = (function () {
     };
     // ******************************************************
     Scene01.prototype.update = function (time) {
+        this.time++;
         this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
         this.cube.scale.set(0, 0, 0);

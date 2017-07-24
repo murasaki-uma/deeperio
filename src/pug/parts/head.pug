@@ -162,7 +162,8 @@ script(id="vertex_pal" type="x-shader/x-vertex").
     uniform float threshold;
     //varying float alpha;
     uniform sampler2D texturePosition;
-
+    uniform vec3 glitchVec;
+    uniform float glitchDist;
     void main()
     {
         vUv = uv;
@@ -180,6 +181,7 @@ script(id="vertex_pal" type="x-shader/x-vertex").
 
         float noisey = snoise(p*0.5)*0.4;
         float noisex = snoise(p.xzy*0.5)*0.4;
+        float noisez = snoise(p.zyx*0.4)*0.4;
         p.y += sin(p.z+time)*0.3;
         p.x += sin(p.z*0.5+time)*noisex;
 
@@ -188,7 +190,8 @@ script(id="vertex_pal" type="x-shader/x-vertex").
 
         //p.y += height;
 
-        p+= tmpPos.xyz;//+ v*height*noisey;
+        p+= tmpPos.xyz + glitchVec * abs(noisez)*glitchDist;
+        //+ v*height*noisey;
         vPos = p;
 
 

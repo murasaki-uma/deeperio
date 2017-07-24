@@ -11,6 +11,7 @@ export default class Scene01{
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
     private uniforms:any[] = [];
+    private materials:any[] = [];
     private gui:GUI;
     private pal:any;
     private pal_objects:any[] = [];
@@ -26,6 +27,7 @@ export default class Scene01{
 
     private isMoveToFront_Pal:boolean = false;
     private translateZ_pal:number = 0;
+    private glitchDist:number = 0.0;
 
     // textured
     private plane_geometry:THREE.PlaneGeometry;
@@ -33,6 +35,8 @@ export default class Scene01{
     private plane:THREE.Mesh;
     private image_uniform:any;
     private isImageUpdate:boolean = false;
+
+    private time:number = 0;
 
 
     // ******************************************************
@@ -117,6 +121,7 @@ export default class Scene01{
 
         // let materials = object.children[0].material.materials;
         let materials = object.children[0].children[0].material.materials;
+        this.materials = materials;
         console.log(materials);
         for (let i = 0; i < materials.length; i++) {
 
@@ -132,7 +137,9 @@ export default class Scene01{
                     transparent: {value: isTransparent},
                     threshold: {value: 0},
                     texturePosition: {value:null},
-                    isDisplay:{value:true}
+                    isDisplay:{value:true},
+                    glitchVec:{value: new THREE.Vector3(1,0,0)},
+                    glitchDist:{value: 0.0}
                 };
 
                 this.uniforms.push(_uniforms);
@@ -257,6 +264,31 @@ export default class Scene01{
             }
         }
 
+
+        if(e.key == "w")
+        {
+            if(Math.random() < 0.9)
+            {
+
+            // this
+            for(let i = 0; i < this.materials.length; i++)
+            {
+                this.materials[i].wireframe = !this.materials[i].wireframe;
+            }
+
+            this.glitchDist += 0.04;
+
+            for(let i = 0; i < this.uniforms.length; i++)
+            {
+                if(this.glitchDist >= Math.PI/2)
+                {
+                    this.glitchDist = 0.0;
+                }
+                this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
+            }
+            }
+        }
+
     }
 
 
@@ -279,6 +311,7 @@ export default class Scene01{
     public update(time)
     {
 
+        this.time++;
 
         this.gpuCompute.compute();
         this.cube.position.z = this.gui.parameters.threshold;
