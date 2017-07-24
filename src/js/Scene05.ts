@@ -13,7 +13,7 @@ export default class Scene05{
     private plane:THREE.Mesh;
     private image_uniform:any;
     private gui:GUI;
-    public isPostProcessing:boolean = true;
+    public isPostProcessing:boolean = false;
     private isImageUpdate:boolean = false;
     private composer:any;
 

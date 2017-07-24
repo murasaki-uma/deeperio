@@ -208,6 +208,7 @@ script(id="fragment_pal" type="x-shader/x-fragment").
     uniform int transparent;
     uniform float threshold;
     float alpha;
+    uniform bool isDisplay;
     void main( void ) {
 
             if(transparent == 1)
@@ -231,6 +232,10 @@ script(id="fragment_pal" type="x-shader/x-fragment").
                 alpha = 1.0;
             }
           gl_FragColor = vec4(texture2D( texture, vUv ).rgb,alpha);
+          if(!isDisplay)
+          {
+            discard;
+          }
 
 
     }

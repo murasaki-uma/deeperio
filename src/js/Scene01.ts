@@ -131,7 +131,8 @@ export default class Scene01{
                     texture: {value: new THREE.TextureLoader().load(img)},
                     transparent: {value: isTransparent},
                     threshold: {value: 0},
-                    texturePosition: {value:null}
+                    texturePosition: {value:null},
+                    isDisplay:{value:true}
                 };
 
                 this.uniforms.push(_uniforms);
@@ -246,6 +247,14 @@ export default class Scene01{
         if(e.key == "m")
         {
             this.isMoveToFront_Pal = !this.isMoveToFront_Pal;
+        }
+
+        if(e.key == "d")
+        {
+            for(let i = 0; i < this.uniforms.length; i++)
+            {
+                this.uniforms[i].isDisplay.value = !this.uniforms[i].isDisplay.value;
+            }
         }
 
     }

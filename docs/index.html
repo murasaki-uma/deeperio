@@ -214,6 +214,7 @@
       uniform int transparent;
       uniform float threshold;
       float alpha;
+      uniform bool isDisplay;
       void main( void ) {
       
               if(transparent == 1)
@@ -237,6 +238,10 @@
                   alpha = 1.0;
               }
             gl_FragColor = vec4(texture2D( texture, vUv ).rgb,alpha);
+            if(!isDisplay)
+            {
+              discard;
+            }
       
       
       }
