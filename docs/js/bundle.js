@@ -10355,6 +10355,7 @@ var Scene05 = (function () {
     function Scene05(renderer, gui) {
         this.isPostProcessing = false;
         this.isImageUpdate = false;
+        this.isAnimationStart = false;
         this.renderer = renderer;
         this.gui = gui;
         this.createScene();
@@ -10415,12 +10416,18 @@ var Scene05 = (function () {
         if (e.key == "p") {
             this.image_uniform.display.value = !this.image_uniform.display.value;
         }
+        if (e.key == "s") {
+            this.isAnimationStart = !this.isAnimationStart;
+        }
     };
     // ******************************************************
     Scene05.prototype.onMouseDown = function (e) {
     };
     // ******************************************************
     Scene05.prototype.update = function (time) {
+        if (this.isAnimationStart) {
+            this.gui.parameters.image_positionZ -= 0.001;
+        }
         // if(this.isImageUpdate)
         // {
         this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
@@ -28742,9 +28749,9 @@ var Main = (function () {
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
                 // this.vthree.addScene(this.post);
-                _this.vthree.addScene(_this.scene01);
+                // this.vthree.addScene(this.scene01);
                 _this.vthree.addScene(_this.scene05);
-                _this.vthree.addScene(_this.scene02);
+                // this.vthree.addScene(this.scene02);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続

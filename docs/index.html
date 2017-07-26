@@ -639,6 +639,10 @@
       varying vec3 vPos;
       uniform float noiseScale;
       uniform float noiseSeed;
+      float rand(vec2 co)
+      {
+         return fract(sin(dot(co.xy,vec2(12.9898,78.233))) * 43758.5453);
+      }
       
       
       vec3 mod289(vec3 x) {
@@ -768,9 +772,12 @@
           }
       uniform bool display;
       void main() {
+          vec2 uv = vUv;
           vec3 noise = curlNoise(vec3(vPos.xy*noiseSeed,time))*noiseScale;
           vec3 color = texture2D( texture, vUv+noise.xy ).rgb;
+      
           gl_FragColor = vec4( color, 1.0 );
+      
       
           if(!display)
           {

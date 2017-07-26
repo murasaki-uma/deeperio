@@ -16,7 +16,7 @@ export default class Scene05{
     public isPostProcessing:boolean = false;
     private isImageUpdate:boolean = false;
     private composer:any;
-
+    private isAnimationStart:boolean = false;
 
 
     // ******************************************************
@@ -111,6 +111,11 @@ export default class Scene05{
             this.image_uniform.display.value = !this.image_uniform.display.value;
         }
 
+        if(e.key == "s")
+        {
+            this.isAnimationStart = !this.isAnimationStart;
+        }
+
     }
 
     // ******************************************************
@@ -123,6 +128,11 @@ export default class Scene05{
     // ******************************************************
     public update(time)
     {
+
+        if(this.isAnimationStart)
+        {
+            this.gui.parameters.image_positionZ -= 0.001;
+        }
 
         // if(this.isImageUpdate)
         // {
