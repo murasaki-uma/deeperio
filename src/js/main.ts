@@ -79,8 +79,9 @@ class Main
                 // this.vthree.addScene(this.scene04);
                 // this.vthree.addScene(this.post);
 
-                // this.vthree.addScene(this.scene01);
+                //
                 this.vthree.addScene(this.scene05);
+                this.vthree.addScene(this.scene01);
                 // this.vthree.addScene(this.scene02);
 
 

@@ -18,7 +18,15 @@ export default class Scene05{
     private composer:any;
     private isAnimationStart:boolean = false;
 
+    private startPlaneZ:number = -0.1;
 
+    private planeMoveSpeed = 0.05;
+
+    private planeRotateSpeed = 0.02;
+
+    private image_noiseScale:number = 0.0;
+    private image_noiseSeed:number = 0.0;
+    private image_noiseSpeed:number = 0.0;
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
@@ -79,6 +87,9 @@ export default class Scene05{
         // this.composer.addPass( effect );
 
 
+        this.image_noiseSeed = this.gui.parameters.image_noiseSeed;
+        this.image_noiseScale = this.gui.parameters.image_noiseScale;
+        this.image_noiseSpeed = this.gui.parameters.image_speed;
 
 
     }
@@ -131,15 +142,45 @@ export default class Scene05{
 
         if(this.isAnimationStart)
         {
-            this.gui.parameters.image_positionZ -= 0.001;
+
+            if(this.planeMoveSpeed >= 0.0005)
+            {
+
+                this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.15;
+            }
+            this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
+            this.startPlaneZ -= this.planeMoveSpeed;
+
+            if(this.planeMoveSpeed <= 0.015)
+            {
+                this.planeRotateSpeed +=(0.0 - this.planeRotateSpeed) * 0.1;
+                this.plane.rotateX(-this.planeRotateSpeed);
+                this.plane.rotateY(-this.planeRotateSpeed/2);
+                this.plane.rotateZ(this.planeRotateSpeed/3);
+            }
+
+            if(this.planeMoveSpeed <= 0.001)
+            {
+                this.image_noiseSeed +=(0.01 - this.image_noiseSeed ) * 0.01;
+                this.image_noiseScale +=(0.01 - this.image_noiseScale ) * 0.01;
+                this.image_noiseSpeed +=(0.01 - this.image_noiseSpeed ) * 0.01;
+            }
+
+
         }
 
         // if(this.isImageUpdate)
         // {
-            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-            this.image_uniform.time.value += this.gui.parameters.image_speed;
-            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
+        this.image_uniform.noiseScale.value = this.image_noiseScale;
+        this.image_uniform.noiseSeed.value = this.image_noiseSeed;
+        this.image_uniform.time.value += this.image_noiseSpeed;
+
+
+
+        this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
             this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
             this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
             this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
@@ -150,7 +191,8 @@ export default class Scene05{
         this.plane.position.set (
             this.gui.parameters.image_positionX,
             this.gui.parameters.image_positionY,
-            this.gui.parameters.image_positionZ,
+            //this.gui.parameters.image_positionZ,
+            this.startPlaneZ
         );
 
         // this.plane.scale.set(14,14,14);

@@ -10356,6 +10356,12 @@ var Scene05 = (function () {
         this.isPostProcessing = false;
         this.isImageUpdate = false;
         this.isAnimationStart = false;
+        this.startPlaneZ = -0.1;
+        this.planeMoveSpeed = 0.05;
+        this.planeRotateSpeed = 0.02;
+        this.image_noiseScale = 0.0;
+        this.image_noiseSeed = 0.0;
+        this.image_noiseSpeed = 0.0;
         this.renderer = renderer;
         this.gui = gui;
         this.createScene();
@@ -10401,6 +10407,9 @@ var Scene05 = (function () {
         // effect.uniforms[ 'amount' ].value = 0.0015;
         // effect.renderToScreen = true;
         // this.composer.addPass( effect );
+        this.image_noiseSeed = this.gui.parameters.image_noiseSeed;
+        this.image_noiseScale = this.gui.parameters.image_noiseScale;
+        this.image_noiseSpeed = this.gui.parameters.image_speed;
     };
     // ******************************************************
     Scene05.prototype.click = function () {
@@ -10426,19 +10435,39 @@ var Scene05 = (function () {
     // ******************************************************
     Scene05.prototype.update = function (time) {
         if (this.isAnimationStart) {
-            this.gui.parameters.image_positionZ -= 0.001;
+            if (this.planeMoveSpeed >= 0.0005) {
+                this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.15;
+            }
+            this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
+            this.startPlaneZ -= this.planeMoveSpeed;
+            if (this.planeMoveSpeed <= 0.015) {
+                this.planeRotateSpeed += (0.0 - this.planeRotateSpeed) * 0.1;
+                this.plane.rotateX(-this.planeRotateSpeed);
+                this.plane.rotateY(-this.planeRotateSpeed / 2);
+                this.plane.rotateZ(this.planeRotateSpeed / 3);
+            }
+            if (this.planeMoveSpeed <= 0.001) {
+                this.image_noiseSeed += (0.01 - this.image_noiseSeed) * 0.01;
+                this.image_noiseScale += (0.01 - this.image_noiseScale) * 0.01;
+                this.image_noiseSpeed += (0.01 - this.image_noiseSpeed) * 0.01;
+            }
         }
         // if(this.isImageUpdate)
         // {
-        this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        this.image_uniform.time.value += this.gui.parameters.image_speed;
+        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
+        this.image_uniform.noiseScale.value = this.image_noiseScale;
+        this.image_uniform.noiseSeed.value = this.image_noiseSeed;
+        this.image_uniform.time.value += this.image_noiseSpeed;
         this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
         this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
         this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
         this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
         // }
-        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, this.gui.parameters.image_positionZ);
+        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, 
+        //this.gui.parameters.image_positionZ,
+        this.startPlaneZ);
         // this.plane.scale.set(14,14,14);
         // this.composer.render();
     };
@@ -28749,8 +28778,9 @@ var Main = (function () {
                 // this.vthree.addScene(this.scene02);
                 // this.vthree.addScene(this.scene04);
                 // this.vthree.addScene(this.post);
-                // this.vthree.addScene(this.scene01);
+                //
                 _this.vthree.addScene(_this.scene05);
+                _this.vthree.addScene(_this.scene01);
                 // this.vthree.addScene(this.scene02);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
