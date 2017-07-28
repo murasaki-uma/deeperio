@@ -2,6 +2,7 @@
  * Created by uma92 on 2017/07/16.
  */
 import GUI from "./GUI";
+import white = THREE.ColorKeywords.white;
 // *********** ひとつめのシーン *********** //
 class WireBox{
     constructor()
@@ -30,9 +31,11 @@ export default class Scene02{
     private geometry:THREE.BoxGeometry;
     private material:THREE.MeshBasicMaterial;
     private cube:THREE.Mesh;
-    private pariking_materials:THREE.Material;
+    private pariking_materials:THREE.Material[] = [];
     private clickCount = 0;
-    private uniforms:any;
+    private uniforms:any[] = [];
+    private parking:any;
+
 
 
     // ******************************************************
@@ -48,14 +51,18 @@ export default class Scene02{
     {
 
 
+        for(let i = 0; i < 2; i++)
+        {
+            this.uniforms.push(  {
+                time: {value: 1.0},
+                texture: {value: null},
+                isDisplay:{value:true},
+                glitchVec:{value: new THREE.Vector3(1,0,0)},
+                glitchDist:{value: 0.0}
+            });
+        }
 
-        this.uniforms ={
-            time: {value: 1.0},
-            texture: {value: null},
-            transparent: {value: 0},
-            threshold: {value: 0},
-            texturePosition: {value:null}
-          };
+        // console.log(this.uniforms);
         this.scene = new THREE.Scene();
 
         // 立方体のジオメトリーを作成
@@ -82,25 +89,17 @@ export default class Scene02{
         // {
         loader.load( './models/parking/parking.dae', ( collada )=> {
             var object = collada.scene;
-            console.log(object);
-            // object.position.y = -1;
-            // object.position.x = 0;
 
             object.rotation.y = Math.PI;
-            // this.pal_objects.push(object);
-            console.log("parking");
             console.log(object);
-            this.pariking_materials = object.children[0].children[0].material;
-            console.log(this.pariking_materials);
-            // this.pariking_materials.side = THREE.DoubleSide;
+            this.parking = object;
+//
+
+            // console.log(this.pariking_materials);
+
 
             this.scene.add( object );
         });
-        // }
-
-
-
-
 
         this.createWireBox();
 
@@ -167,7 +166,7 @@ export default class Scene02{
     // ******************************************************
     public click()
     {
-        console.log(this.pariking_materials);
+        // console.log(this.pariking_materials);
         // if(this.clickCount == 0)
         // {
         //
@@ -186,7 +185,46 @@ export default class Scene02{
         //     });
         //     this.clickCount++;
         // }
-            this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
+
+
+        console.log(this.parking.children[0].children[0].material);
+
+        this.pariking_materials.push(this.parking.children[0].children[0].material);
+        // this.pariking_materials.push(this.parking.parent.children);
+        // console.log(this.pariking_materials[.map.image.src);
+        let img = this.pariking_materials[0].map.image.src;
+        let _imgs:string[] = [];
+        _imgs.push(img);
+        // img = this.parking[1].map.src;
+        // _imgs.push(img);
+
+
+        // for(let i = 0; i < this.pariking_materials.length; i++)
+        // {
+            this.uniforms[0].texture.value = new THREE.TextureLoader().load(_imgs[0]);
+        this.parking.children[0].children[0].material = new THREE.ShaderMaterial({
+                uniforms: this.uniforms,
+                vertexShader: document.getElementById("vertex_parking").textContent,
+                fragmentShader: document.getElementById("fragment_parking").textContent,
+                wireframe: true,
+                transparent:true,
+                side:THREE.DoubleSide
+                // drawBuffer:true
+            });
+        // }
+
+
+        this.parking.children[0].children[0].material.wireframe = true;
+
+
+
+
+
+        // this.parking.children[0].children[0].material = new THREE.MeshBasicMaterial({color:0xffffff});
+
+
+
+        //     this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
 
 
     }
@@ -222,8 +260,11 @@ export default class Scene02{
 
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
+        for(let i =0; i < this.uniforms.length; i++)
+        {
+            this.uniforms[i].time.value += 0.01;
+        }
 
-        this.uniforms.time.value += 0.01;
 
         this.scene.rotateY(0.01);
         this.scene.rotateX(0.005);

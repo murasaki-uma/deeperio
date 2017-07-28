@@ -1,38 +1,4 @@
-//
-   Created by uma92 on 2017/02/18.
-meta(charset="UTF-8")
-meta(name ="robots" content="noindex, nofollow")
-
-script(id="computeShaderPosition" type="x-shader/x-fragment").
-   void main() {
-       vec2 uv = gl_FragCoord.xy / resolution.xy;
-       vec4 tmpPos = texture2D( texturePosition, uv );
-       //tmpPos.x += 0.5;
-       vec3 pos = tmpPos.xyz;
-       gl_FragColor = vec4( pos, 1.0 );
-   }
-
-script(id="computeShaderVelocity" type="x-shader/x-fragment").
-
-    // 移動方向についていろいろ計算できるシェーダー。
-    // 今回はなにもしてない。
-    // ここでVelのx y zについて情報を上書きすると、それに応じて移動方向が変わる
-    #include <common>
-
-    void main() {
-        vec2 uv = gl_FragCoord.xy / resolution.xy;
-        float idParticle = uv.y * resolution.x + uv.x;
-       // vec4 tmpVel = texture2D( textureVelocity, uv );
-        vec3 vel = tmpVel.xyz;
-
-        gl_FragColor = vec4( vel.xyz, 1.0 );
-    }
-
-
-script(id="vertex_pal" type="x-shader/x-vertex").
-    varying vec2 vUv;
-    varying vec3 vPos;
-    uniform float time;
+script(id="vertex_parking" type="x-shader/x-vertex").
     vec3 mod289(vec3 x) {
       return x - floor(x * (1.0 / 289.0)) * 289.0;
     }
@@ -158,101 +124,27 @@ script(id="vertex_pal" type="x-shader/x-vertex").
       return normalize( vec3( x , y , z ) * divisor );
 
     }
-    uniform int transparent;
-    uniform float threshold;
-    //varying float alpha;
-    uniform sampler2D texturePosition;
     uniform vec3 glitchVec;
     uniform float glitchDist;
+    varying vec2 vUv;
+    varying vec3 vPos;
+    uniform float time;
     void main()
     {
         vUv = uv;
-        vec3 p = position.xyz;
-        float d = distance(vec3(p.x,p.y,p.z), vec3(0,0,threshold));
-        float height = 0.0;
-        if(d < 10.0)
-        {
-            height =( 1.0-(d/10.0))*60.0;
-
-        }
-
-        vec4 tmpPos = texture2D( texturePosition, uv );
-        //position.y += sin(time)*0.01;
-
-        float noisey = snoise(p*0.5)*0.4;
-        float noisex = snoise(p.xzy*0.5)*0.4;
-        float noisez = snoise(p.zyx*0.4)*0.4;
-        p.y += sin(p.z+time)*0.3;
-        p.x += sin(p.z*0.5+time)*noisex;
-
-        vec3 v = normalize(p);
-        v.z = 0.0;
-
-        //p.y += height;
-
-        p+= tmpPos.xyz + glitchVec * abs(noisez)*glitchDist;
-        //+ v*height*noisey;
-        vPos = p;
-
-
-
-        vec4 mvPosition = modelViewMatrix * vec4( p, 1.0 );
-
-        //vec3 n = curlNoise(vec3(mvPosition.x,mvPosition.y+time,mvPosition.z));
-        gl_Position = projectionMatrix * (mvPosition);
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        gl_Position = projectionMatrix * mvPosition;
 
 
     }
-
-script(id="fragment_pal" type="x-shader/x-fragment").
-    uniform sampler2D texture;
+script(id="fragment_parking" type="x-shader/x-fragment").
     varying vec2 vUv;
     varying vec3 vPos;
-    uniform int transparent;
-    uniform float threshold;
-    float alpha;
     uniform bool isDisplay;
     void main( void ) {
 
-            if(transparent == 1)
-            {
-                float d = distance(vec3(vPos.x,vPos.y,vPos.z), vec3(0,0,threshold));
 
-                if(d < 10.0)
-                {
-                    alpha =( 1.0-(d/10.0))+0.2;
-                    if(alpha > 1.0)
-                    {
-                        alpha = 1.0;
-                    }
-
-                } else
-                {
-                    alpha = 0.0;
-                }
-            } else
-            {
-                alpha = 1.0;
-            }
-          gl_FragColor = vec4(texture2D( texture, vUv ).rgb,alpha);
-          if(!isDisplay)
-          {
-            discard;
-          }
+          gl_FragColor = vec4(texture2D( texture, vUv ).rgb,1.0);
 
 
     }
-
-include GLSL_GPUParticle
-include GLSL_Image
-include GLSL_Park
-script(src="./js/three.min.js")
-script(src="./js/GPUComputationRenderer.js")
-script(src="./js/Detector.js")
-script(src="./js/GeometryUtils.js")
-script(src="./js/OrbitControls.js")
-script(src="./js/Tween.js")
-script(src="./js/bundle.js")
-link(rel="stylesheet" type="text/css" href="css/main.css")
-meta(property="og:type",content="website")
-
