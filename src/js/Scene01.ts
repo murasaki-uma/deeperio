@@ -39,6 +39,9 @@ export default class Scene01{
     private time:number = 0;
 
 
+    private _threshold:number = 35.0;
+
+
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
@@ -264,6 +267,11 @@ export default class Scene01{
             }
         }
 
+        if(e.key == "t")
+        {
+            this._threshold = -40.0;
+        }
+
 
         if(e.key == "w")
         {
@@ -311,6 +319,10 @@ export default class Scene01{
     public update(time)
     {
 
+        if(this._threshold <= 40.0)
+        {
+            this._threshold += 0.2;
+        }
         this.time++;
 
         this.gpuCompute.compute();
@@ -325,14 +337,15 @@ export default class Scene01{
 
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget( this.positionVariable ).texture;
             this.uniforms[i].time.value += timerStep;
-            // this.uniforms[i].threshold.value = Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+            this.uniforms[i].threshold.value = this._threshold ;//Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
 
         }
+
 
         if(this.isMoveToFront_Pal)
         {
             this.translateZ_pal += timerStep;
-            this.pal_objects[0].translateZ(this.translateZ_pal*0.04);
+            this.pal_objects[0].translateY(-this.translateZ_pal*0.04);
         }
 
         if(this.isImageUpdate)

@@ -310,7 +310,7 @@ export default class Scene02{
         // {
             let _t = this.uniforms[0].time.value % (Math.PI/2.0);
             let p = this.scene.position;
-            p.z = -_t * 9.0;
+            p.z = -_t * 5.0;
             this.scene.position.set(p.x,p.y,p.z);
         // }
         // this.cube.rotation.x += 0.1;
@@ -318,7 +318,7 @@ export default class Scene02{
         for(let i =0; i < this.uniforms.length; i++)
         {
             this.uniforms[i].time.value += 0.01;
-            this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;
+            this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;// * (Math.PI/2.0-_t);
         }
 
 

@@ -190,7 +190,7 @@ export default class VThree
             }
 
             if (e.key == "d") {
-                this.debugCounter++;
+                //this.debugCounter++;
             }
 
             if (e.code == "Space") {

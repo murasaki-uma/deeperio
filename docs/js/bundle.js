@@ -9947,223 +9947,249 @@ var GUI = (function () {
 
 "use strict";
 // *********** ひとつめのシーン *********** //
-var WireBox = (function () {
-    function WireBox() {
-        var material = new THREE.LineBasicMaterial({ vertexColors: THREE.VertexColors });
-        var geometery = new THREE.Geometry();
-        geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, 0.5));
-        geometery.vertices.push(new THREE.Vector3(0.5, -0.5, 0.5));
-        geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, -0.5));
-        geometery.vertices.push(new THREE.Vector3(0.5, -0.5, -0.5));
-        var line = new THREE.Line(geometery);
-    }
-    return WireBox;
-}());
-var Scene02 = (function () {
+var Scene01 = (function () {
     // ******************************************************
-    function Scene02(renderer, gui) {
-        this.pariking_materials = [];
-        this.clickCount = 0;
+    function Scene01(renderer, gui) {
+        var _this = this;
         this.uniforms = [];
+        this.materials = [];
+        this.pal_objects = [];
+        this.TEXTURE_WIDTH = 320;
+        this.TEXTURE_HEIGHT = 320;
+        this.isMoveToFront_Pal = false;
+        this.translateZ_pal = 0;
+        this.glitchDist = 0.0;
+        this.isImageUpdate = false;
+        this.time = 0;
+        this._threshold = 35.0;
+        this.replaceShader_WireWave = function (object, isTransparent, isWire) {
+            // let materials = object.children[0].material.materials;
+            var materials = object.children[0].children[0].material.materials;
+            _this.materials = materials;
+            console.log(materials);
+            for (var i = 0; i < materials.length; i++) {
+                //let img = materials[i].map.image.src;//.attributes.currentSrc;
+                console.log(materials[i]);
+                console.log(materials[i].map);
+                console.log(materials[i].map.image);
+                var img = materials[i].map.image.currentSrc;
+                var _uniforms = {
+                    time: { value: 1.0 },
+                    texture: { value: new THREE.TextureLoader().load(img) },
+                    transparent: { value: isTransparent },
+                    threshold: { value: 0 },
+                    texturePosition: { value: null },
+                    isDisplay: { value: true },
+                    glitchVec: { value: new THREE.Vector3(1, 0, 0) },
+                    glitchDist: { value: 0.0 }
+                };
+                _this.uniforms.push(_uniforms);
+                // materials[i].wireframe = true;
+                materials[i] = new THREE.ShaderMaterial({
+                    uniforms: _uniforms,
+                    vertexShader: document.getElementById("vertex_pal").textContent,
+                    fragmentShader: document.getElementById("fragment_pal").textContent,
+                    wireframe: isWire,
+                    transparent: true,
+                    side: THREE.DoubleSide
+                    // drawBuffer:true
+                });
+            }
+            return object;
+        };
         this.renderer = renderer;
-        this.gui = gui;
         this.createScene();
+        this.createImage();
+        this.gui = gui;
         console.log("scene created!");
     }
     // ******************************************************
-    Scene02.prototype.createScene = function () {
+    Scene01.prototype.createScene = function () {
         var _this = this;
-        var x, y, z;
-        var _r = Math.random();
-        if (_r < 1.0) {
-            x = 1.0;
-            y = 0;
-            z = 0;
-            if (_r < 0.5) {
-                x = -1.0;
-                y = 0.0;
-                z = 0;
-            }
-        }
-        for (var i = 0; i < 2; i++) {
-            this.uniforms.push({
-                time: { value: 1.0 },
-                texture: { value: null },
-                isDisplay: { value: true },
-                glitchVec: { value: new THREE.Vector3(x, y, z).normalize() },
-                glitchDist: { value: 0.0 },
-                vGlitchArea: { value: 0.0 },
-                animationNum: { value: 1 }
-            });
-        }
-        // console.log(this.uniforms);
         this.scene = new THREE.Scene();
         // 立方体のジオメトリーを作成
         this.geometry = new THREE.BoxGeometry(1, 1, 1);
         // 緑のマテリアルを作成
-        this.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        this.material = new THREE.MeshStandardMaterial({
+            roughness: 0.7,
+            color: 0xffffff,
+            bumpScale: 0.002,
+            metalness: 0.2
+        });
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.cube = new THREE.Mesh(this.geometry, this.material);
         // メッシュをシーンに追加
-        // this.scene.add( this.cube );
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        // カメラを作成
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // カメラ位置を設定
-        this.camera.position.z = 5;
+        this.scene.add(this.cube);
+        var ambient = new THREE.AmbientLight(0xffffff);
+        this.scene.add(ambient);
+        var dLight = new THREE.DirectionalLight(0xffffff, 0.2);
+        dLight.position.set(0, 1, 0).normalize();
+        this.scene.add(dLight);
+        var directionalLight = new THREE.DirectionalLight(0xffeedd);
+        directionalLight.position.set(0, 0, 1).normalize();
+        this.scene.add(directionalLight);
+        var onProgress = function (xhr) {
+            if (xhr.lengthComputable) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(Math.round(percentComplete, 2) + '% downloaded');
+            }
+        };
+        var onError = function (xhr) {
+        };
         var loader = new THREE.ColladaLoader();
         loader.options.convertUpAxis = true;
-        // for(let i = 0; i < 2; i++)
-        // {
-        loader.load('./models/parking/parking.dae', function (collada) {
-            var object = collada.scene;
-            object.rotation.y = Math.PI;
-            console.log(object);
-            _this.parking = object;
-            //
-            // console.log(this.pariking_materials);
-            _this.scene.add(object);
-        });
-        this.createWireBox();
-    };
-    Scene02.prototype.createWireBox = function () {
-        var object = new THREE.Object3D();
-        var line_geometery = new THREE.Geometry();
-        var line_material = new THREE.LineBasicMaterial({ color: 0xffffff });
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, -0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, -0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, 0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, 0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, 0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, 0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, 0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(0.5, -0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, 0.5, 0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(0.5, -0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(0.5, 0.5, -0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, -0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, -0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        line_geometery = new THREE.Geometry();
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, -0.5, 0.5));
-        line_geometery.vertices.push(new THREE.Vector3(-0.5, 0.5, 0.5));
-        object.add(new THREE.Line(line_geometery, line_material));
-        var scale = 8;
-        object.scale.set(scale * 1.1, scale, scale * 1.1);
-        object.position.y = 2.6;
-        object.position.z = 0.7;
-        this.scene.add(object);
-    };
-    Scene02.prototype.replaceShader = function () {
-        console.log(this.parking.children[0].children[0].material);
-        this.pariking_materials.push(this.parking.children[0].children[0].material);
-        // this.pariking_materials.push(this.parking.parent.children);
-        // console.log(this.pariking_materials[.map.image.src);
-        var img = this.pariking_materials[0].map.image.src;
-        var _imgs = [];
-        _imgs.push(img);
-        // img = this.parking[1].map.src;
-        // _imgs.push(img);
-        // for(let i = 0; i < this.pariking_materials.length; i++)
-        // {
-        this.uniforms[0].texture.value = new THREE.TextureLoader().load(_imgs[0]);
-        this.parking.children[0].children[0].material = new THREE.ShaderMaterial({
-            uniforms: this.uniforms[0],
-            vertexShader: document.getElementById("vertex_parking").textContent,
-            fragmentShader: document.getElementById("fragment_parking").textContent,
-            wireframe: true,
-            transparent: true,
-            side: THREE.DoubleSide,
-            linewidth: 4
-            // drawBuffer:true
-        });
-    };
-    // ******************************************************
-    Scene02.prototype.click = function () {
-        // console.log(this.pariking_materials);
-        // if(this.clickCount == 0)
-        // {
-        //
-        //     let img = this.pariking_materials.map.image.currentSrc;
-        //
-        //     this.uniforms.texture.value = new THREE.TextureLoader().load(img);
-        //
-        //     this.pariking_materials = new THREE.ShaderMaterial({
-        //         uniforms: this.uniforms,
-        //         vertexShader: document.getElementById("vertex_pal").textContent,
-        //         fragmentShader: document.getElementById("fragment_pal").textContent,
-        //         wireframe: true,
-        //         transparent:true,
-        //         side:THREE.DoubleSide
-        //         // drawBuffer:true
-        //     });
-        //     this.clickCount++;
-        // }
-        // this.parking.children[0].children[0].material.wireframe = true;
-        // this.parking.children[0].children[0].material = new THREE.MeshBasicMaterial({color:0xffffff});
-        //     this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
-    };
-    // ******************************************************
-    Scene02.prototype.keyUp = function (e) {
-        if (e.key == "w") {
-            this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
+        for (var i = 0; i < 1; i++) {
+            loader.load('./models/pal/pal.dae', function (collada) {
+                var object = collada.scene;
+                console.log(object);
+                object.position.y = -1;
+                object.position.x = 0;
+                //object.rotation.y = 0.08 + Math.PI;
+                _this.pal_objects.push(object);
+                _this.scene.add(object);
+            }, onProgress, onError);
         }
-        if (e.key == "r") {
-            this.replaceShader();
+        // カメラを作成
+        this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // カメラ位置を設定
+        this.scene.scale.set(1.2, 1, 1);
+        this.camera.position.z = 30;
+        this.initComputeRenderer();
+    };
+    Scene01.prototype.initComputeRenderer = function () {
+        this.gpuCompute = new GPUComputationRenderer(this.TEXTURE_WIDTH, this.TEXTURE_HEIGHT, this.renderer);
+        console.log(this.gpuCompute);
+        var dtPosition = this.gpuCompute.createTexture();
+        this.fillTexture(dtPosition);
+        this.positionVariable = this.gpuCompute.addVariable("texturePosition", document.getElementById('computeShaderPosition').textContent, dtPosition);
+        this.gpuCompute.setVariableDependencies(this.positionVariable, [this.positionVariable]);
+        var error = this.gpuCompute.init();
+        if (error !== null) {
+            console.error(error);
+        }
+    };
+    Scene01.prototype.fillTexture = function (texturePosition) {
+        var posArray = texturePosition.image.data;
+        for (var k = 0, k1 = posArray.length; k < k1; k += 4) {
+            var x, y, z;
+            x = 0;
+            y = 0;
+            z = 0;
+            posArray[k + 0] = x;
+            posArray[k + 1] = y;
+            posArray[k + 2] = z;
+            posArray[k + 3] = 0;
+        }
+    };
+    // ******************************************************
+    Scene01.prototype.keyUp = function (e) {
+    };
+    Scene01.prototype.click = function () {
+        this.replaceShader_WireWave(this.pal_objects[0], 0, false);
+        // this.replaceShader_WireWave(this.pal_objects[1],1,false);
+    };
+    Scene01.prototype.createImage = function () {
+        this.image_uniform = {
+            texture: { value: new THREE.TextureLoader().load("./Texture/pal01.png") },
+            time: { value: 0.0 },
+            noiseSeed: { value: 0.1 },
+            noiseScale: { value: 0.1 },
+            time_scale_vertex: { value: 0.0 },
+            noiseSeed_vertex: { value: 0.1 },
+            noiseScale_vertex: { value: 0.1 },
+            distance_threshold: { value: 0.3 },
+            display: { value: true }
+        };
+        // 立方体のジオメトリーを作成
+        this.plane_geometry = new THREE.PlaneGeometry(1, window.innerHeight / window.innerWidth, 100, 100);
+        // 緑のマテリアルを作成
+        this.plane_material = new THREE.ShaderMaterial({
+            uniforms: this.image_uniform,
+            vertexShader: document.getElementById('imageVertexShader').textContent,
+            fragmentShader: document.getElementById('imageFragmentShader').textContent,
+            side: THREE.DoubleSide
+        });
+        // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
+        this.plane = new THREE.Mesh(this.plane_geometry, this.plane_material);
+        // メッシュをシーンに追加
+        // this.scene.add( this.plane );
+    };
+    // ******************************************************
+    Scene01.prototype.keyDown = function (e) {
+        if (e.key == "p") {
+            this.image_uniform.display.value = !this.image_uniform.display.value;
+        }
+        if (e.key == "m") {
+            this.isMoveToFront_Pal = !this.isMoveToFront_Pal;
         }
         if (e.key == "d") {
             for (var i = 0; i < this.uniforms.length; i++) {
-                var num = this.uniforms[i].animationNum.value;
-                console.log(num);
-                this.uniforms[i].animationNum.value = (num + 1) % 4;
+                this.uniforms[i].isDisplay.value = !this.uniforms[i].isDisplay.value;
+            }
+        }
+        if (e.key == "t") {
+            this._threshold = -40.0;
+        }
+        if (e.key == "w") {
+            if (Math.random() < 0.9) {
+                // this
+                for (var i = 0; i < this.materials.length; i++) {
+                    this.materials[i].wireframe = !this.materials[i].wireframe;
+                }
+                this.glitchDist += 0.04;
+                for (var i = 0; i < this.uniforms.length; i++) {
+                    if (this.glitchDist >= Math.PI / 2) {
+                        this.glitchDist = 0.0;
+                    }
+                    this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
+                }
             }
         }
     };
     // ******************************************************
-    Scene02.prototype.mouseMove = function (e) {
+    Scene01.prototype.mouseMove = function (e) {
     };
     // ******************************************************
-    Scene02.prototype.keyDown = function (e) {
+    Scene01.prototype.onMouseDown = function (e) {
     };
     // ******************************************************
-    Scene02.prototype.onMouseDown = function (e) {
-    };
-    // ******************************************************
-    Scene02.prototype.update = function (time) {
-        // if(this.uniforms[0].animationNum.value == 3)
-        // {
-        var _t = this.uniforms[0].time.value % (Math.PI / 2.0);
-        var p = this.scene.position;
-        p.z = -_t * 9.0;
-        this.scene.position.set(p.x, p.y, p.z);
-        // }
+    Scene01.prototype.update = function (time) {
+        if (this._threshold <= 40.0) {
+            this._threshold += 0.2;
+        }
+        this.time++;
+        this.gpuCompute.compute();
+        this.cube.position.z = this.gui.parameters.threshold;
+        this.cube.scale.set(0, 0, 0);
+        var timerStep = 0.004;
+        for (var i = 0; i < this.uniforms.length; i++) {
+            //console.log(this.uniforms[i]);
+            this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
+            this.uniforms[i].time.value += timerStep;
+            this.uniforms[i].threshold.value = this._threshold; //Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+        }
+        if (this.isMoveToFront_Pal) {
+            this.translateZ_pal += timerStep;
+            this.pal_objects[0].translateY(-this.translateZ_pal * 0.04);
+        }
+        if (this.isImageUpdate) {
+            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+            this.image_uniform.time.value += this.gui.parameters.image_speed;
+            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        }
+        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, this.gui.parameters.image_positionZ);
+        this.plane.scale.set(14, 14, 14);
+        //this.scene.position.z += 0.1;
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
-        for (var i = 0; i < this.uniforms.length; i++) {
-            this.uniforms[i].time.value += 0.01;
-            this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;
-        }
-        this.scene.rotateY(0.01);
-        this.scene.rotateX(0.005);
     };
-    return Scene02;
+    return Scene01;
 }());
-/* harmony default export */ __webpack_exports__["a"] = (Scene02);
+/* harmony default export */ __webpack_exports__["a"] = (Scene01);
 
 
 /***/ }),
@@ -10259,7 +10285,7 @@ var VThree = (function () {
                     _this.updateCanvasAlpha();
                 }
                 if (e.key == "d") {
-                    _this.debugCounter++;
+                    //this.debugCounter++;
                 }
                 if (e.code == "Space") {
                     // this.StartStop();
@@ -28375,7 +28401,7 @@ var GUIParameters = (function () {
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene02__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__Scene01__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__VThree__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__GUI__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__loaders_MTLLoader_js__ = __webpack_require__(8);
@@ -28476,8 +28502,8 @@ var Main = (function () {
                     _this.vthree.oscValue = msg;
                     __WEBPACK_IMPORTED_MODULE_0_jquery__('#msg').text(_this.vthree.oscValue);
                 });
-                // this.scene01 = new Scene01(this.vthree.renderer,this.gui);
-                _this.scene02 = new __WEBPACK_IMPORTED_MODULE_1__Scene02__["a" /* default */](_this.vthree.renderer, _this.gui);
+                _this.scene01 = new __WEBPACK_IMPORTED_MODULE_1__Scene01__["a" /* default */](_this.vthree.renderer, _this.gui);
+                // this.scene02 = new Scene02(this.vthree.renderer,this.gui);
                 // this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 // this.scene04 = new Scene04(this.vthree.renderer,this.gui);
                 // this.scene05 = new Scene05(this.vthree.renderer,this.gui, this.vthree);
@@ -28487,8 +28513,8 @@ var Main = (function () {
                 // this.vthree.addScene(this.post);
                 //
                 // this.vthree.addScene(this.scene05);
-                // this.vthree.addScene(this.scene01);
-                _this.vthree.addScene(_this.scene02);
+                _this.vthree.addScene(_this.scene01);
+                // this.vthree.addScene(this.scene02);
                 _this.vthree.draw();
                 _this.vthree.isUpdate = true;
                 // this.socket = io.connect(); // C02. ソケットへの接続

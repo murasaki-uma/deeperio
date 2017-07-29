@@ -177,12 +177,12 @@
           float height = 0.0;
           if(d < 10.0)
           {
-              height =( 1.0-(d/10.0))*60.0;
+              height =sin((d/10.0)*3.14)*15.0;
       
           }
       
           vec4 tmpPos = texture2D( texturePosition, uv );
-          //position.y += sin(time)*0.01;
+          //position.y += sin(time)*0.03;
       
           float noisey = snoise(p*0.5)*0.4;
           float noisex = snoise(p.xzy*0.5)*0.4;
@@ -190,14 +190,28 @@
           p.y += sin(p.z+time)*0.3;
           p.x += sin(p.z*0.5+time)*noisex;
       
-          vec3 v = normalize(p);
+          vec3 v = p;
           v.z = 0.0;
+          v = normalize(v);
+          v.x *= 0.1;
       
-          //p.y += height;
+          p.y += height/14.0;
       
           p+= tmpPos.xyz + glitchVec * abs(noisez)*glitchDist;
-          //+ v*height*noisey;
+         // p += v*height*noisey;
+      
+      
+          float theta = sin( time + p.z ) / 2.0;
+          float _s = sin(mod(time,3.141592));
+      
+          float c = cos( theta );
+          float s = sin( theta )*_s * 1.5;
+      
+      
+          mat3 m = mat3( c, s, 0, 0, 0, 1.0, -s, c, 0.0 );
+          p *= m;
           vPos = p;
+      
       
       
       
