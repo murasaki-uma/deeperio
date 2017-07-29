@@ -9973,15 +9973,27 @@ var Scene02 = (function () {
     // ******************************************************
     Scene02.prototype.createScene = function () {
         var _this = this;
+        var x, y, z;
+        var _r = Math.random();
+        if (_r < 1.0) {
+            x = 1.0;
+            y = 0;
+            z = 0;
+            if (_r < 0.5) {
+                x = -1.0;
+                y = 0.0;
+                z = 0;
+            }
+        }
         for (var i = 0; i < 2; i++) {
             this.uniforms.push({
                 time: { value: 1.0 },
                 texture: { value: null },
                 isDisplay: { value: true },
-                glitchVec: { value: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize() },
+                glitchVec: { value: new THREE.Vector3(x, y, z).normalize() },
                 glitchDist: { value: 0.0 },
                 vGlitchArea: { value: 0.0 },
-                animationNum: { value: 0 }
+                animationNum: { value: 1 }
             });
         }
         // console.log(this.uniforms);
@@ -10057,27 +10069,7 @@ var Scene02 = (function () {
         object.position.z = 0.7;
         this.scene.add(object);
     };
-    // ******************************************************
-    Scene02.prototype.click = function () {
-        // console.log(this.pariking_materials);
-        // if(this.clickCount == 0)
-        // {
-        //
-        //     let img = this.pariking_materials.map.image.currentSrc;
-        //
-        //     this.uniforms.texture.value = new THREE.TextureLoader().load(img);
-        //
-        //     this.pariking_materials = new THREE.ShaderMaterial({
-        //         uniforms: this.uniforms,
-        //         vertexShader: document.getElementById("vertex_pal").textContent,
-        //         fragmentShader: document.getElementById("fragment_pal").textContent,
-        //         wireframe: true,
-        //         transparent:true,
-        //         side:THREE.DoubleSide
-        //         // drawBuffer:true
-        //     });
-        //     this.clickCount++;
-        // }
+    Scene02.prototype.replaceShader = function () {
         console.log(this.parking.children[0].children[0].material);
         this.pariking_materials.push(this.parking.children[0].children[0].material);
         // this.pariking_materials.push(this.parking.parent.children);
@@ -10100,6 +10092,28 @@ var Scene02 = (function () {
             linewidth: 4
             // drawBuffer:true
         });
+    };
+    // ******************************************************
+    Scene02.prototype.click = function () {
+        // console.log(this.pariking_materials);
+        // if(this.clickCount == 0)
+        // {
+        //
+        //     let img = this.pariking_materials.map.image.currentSrc;
+        //
+        //     this.uniforms.texture.value = new THREE.TextureLoader().load(img);
+        //
+        //     this.pariking_materials = new THREE.ShaderMaterial({
+        //         uniforms: this.uniforms,
+        //         vertexShader: document.getElementById("vertex_pal").textContent,
+        //         fragmentShader: document.getElementById("fragment_pal").textContent,
+        //         wireframe: true,
+        //         transparent:true,
+        //         side:THREE.DoubleSide
+        //         // drawBuffer:true
+        //     });
+        //     this.clickCount++;
+        // }
         // this.parking.children[0].children[0].material.wireframe = true;
         // this.parking.children[0].children[0].material = new THREE.MeshBasicMaterial({color:0xffffff});
         //     this.pariking_materials.wireframe = !this.pariking_materials.wireframe;
@@ -10108,6 +10122,16 @@ var Scene02 = (function () {
     Scene02.prototype.keyUp = function (e) {
         if (e.key == "w") {
             this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
+        }
+        if (e.key == "r") {
+            this.replaceShader();
+        }
+        if (e.key == "d") {
+            for (var i = 0; i < this.uniforms.length; i++) {
+                var num = this.uniforms[i].animationNum.value;
+                console.log(num);
+                this.uniforms[i].animationNum.value = (num + 1) % 4;
+            }
         }
     };
     // ******************************************************
@@ -10121,6 +10145,13 @@ var Scene02 = (function () {
     };
     // ******************************************************
     Scene02.prototype.update = function (time) {
+        // if(this.uniforms[0].animationNum.value == 3)
+        // {
+        var _t = this.uniforms[0].time.value % (Math.PI / 2.0);
+        var p = this.scene.position;
+        p.z = -_t * 9.0;
+        this.scene.position.set(p.x, p.y, p.z);
+        // }
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
         for (var i = 0; i < this.uniforms.length; i++) {

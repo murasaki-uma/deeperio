@@ -52,6 +52,22 @@ export default class Scene02{
     private createScene()
     {
 
+        let x,y,z;
+        let _r = Math.random();
+        if(_r < 1.0)
+        {
+            x = 1.0;
+            y = 0;
+            z = 0;
+
+            if(_r < 0.5)
+            {
+                x = -1.0;
+                y = 0.0;
+                z = 0;
+
+            }
+        }
 
         for(let i = 0; i < 2; i++)
         {
@@ -59,10 +75,10 @@ export default class Scene02{
                 time: {value: 1.0},
                 texture: {value: null},
                 isDisplay:{value:true},
-                glitchVec:{value: new THREE.Vector3(Math.random(),Math.random(),Math.random()).normalize()},
+                glitchVec:{value: new THREE.Vector3(x,y,z).normalize()},
                 glitchDist:{value: 0.0},
                 vGlitchArea:{value: 0.0},
-                animationNum:{value:0}
+                animationNum:{value:1}
             });
         }
 
@@ -166,6 +182,36 @@ export default class Scene02{
         this.scene.add(object);
     }
 
+    public replaceShader()
+    {
+        console.log(this.parking.children[0].children[0].material);
+
+        this.pariking_materials.push(this.parking.children[0].children[0].material);
+        // this.pariking_materials.push(this.parking.parent.children);
+        // console.log(this.pariking_materials[.map.image.src);
+        let img = this.pariking_materials[0].map.image.src;
+        let _imgs:string[] = [];
+        _imgs.push(img);
+        // img = this.parking[1].map.src;
+        // _imgs.push(img);
+
+
+        // for(let i = 0; i < this.pariking_materials.length; i++)
+        // {
+        this.uniforms[0].texture.value = new THREE.TextureLoader().load(_imgs[0]);
+        this.parking.children[0].children[0].material = new THREE.ShaderMaterial({
+            uniforms: this.uniforms[0],
+            vertexShader: document.getElementById("vertex_parking").textContent,
+            fragmentShader: document.getElementById("fragment_parking").textContent,
+            wireframe: true,
+            transparent:true,
+            side:THREE.DoubleSide,
+            linewidth:4
+            // drawBuffer:true
+        });
+
+    }
+
 
     // ******************************************************
     public click()
@@ -191,31 +237,6 @@ export default class Scene02{
         // }
 
 
-        console.log(this.parking.children[0].children[0].material);
-
-        this.pariking_materials.push(this.parking.children[0].children[0].material);
-        // this.pariking_materials.push(this.parking.parent.children);
-        // console.log(this.pariking_materials[.map.image.src);
-        let img = this.pariking_materials[0].map.image.src;
-        let _imgs:string[] = [];
-        _imgs.push(img);
-        // img = this.parking[1].map.src;
-        // _imgs.push(img);
-
-
-        // for(let i = 0; i < this.pariking_materials.length; i++)
-        // {
-            this.uniforms[0].texture.value = new THREE.TextureLoader().load(_imgs[0]);
-        this.parking.children[0].children[0].material = new THREE.ShaderMaterial({
-                uniforms: this.uniforms[0],
-                vertexShader: document.getElementById("vertex_parking").textContent,
-                fragmentShader: document.getElementById("fragment_parking").textContent,
-                wireframe: true,
-                transparent:true,
-                side:THREE.DoubleSide,
-                linewidth:4
-                // drawBuffer:true
-            });
 
 
         // this.parking.children[0].children[0].material.wireframe = true;
@@ -236,10 +257,29 @@ export default class Scene02{
     // ******************************************************
     public keyUp(e:KeyboardEvent)
     {
+
         if(e.key == "w")
         {
             this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
         }
+
+        if(e.key == "r")
+        {
+            this.replaceShader();
+        }
+
+
+        if(e.key == "d")
+        {
+            for(let i = 0; i < this.uniforms.length; i++)
+            {
+
+                let num = this.uniforms[i].animationNum.value;
+                console.log(num);
+                this.uniforms[i].animationNum.value = (num+1)%4;
+            }
+        }
+
     }
 
     // ******************************************************
@@ -265,6 +305,14 @@ export default class Scene02{
     public update(time)
     {
 
+
+        // if(this.uniforms[0].animationNum.value == 3)
+        // {
+            let _t = this.uniforms[0].time.value % (Math.PI/2.0);
+            let p = this.scene.position;
+            p.z = -_t * 9.0;
+            this.scene.position.set(p.x,p.y,p.z);
+        // }
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;
         for(let i =0; i < this.uniforms.length; i++)
