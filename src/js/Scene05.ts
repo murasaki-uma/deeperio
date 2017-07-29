@@ -3,6 +3,7 @@
 import GUI from "./GUI";
 import SphereGeometry = THREE.SphereGeometry;
 import MeshLambertMaterial = THREE.MeshLambertMaterial;
+import VThree from "./VThree";
 export default class Scene05{
 
     public scene: THREE.Scene;
@@ -27,11 +28,14 @@ export default class Scene05{
     private image_noiseScale:number = 0.0;
     private image_noiseSeed:number = 0.0;
     private image_noiseSpeed:number = 0.0;
+    private vthree:VThree;
     // ******************************************************
-    constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
+    constructor(renderer:THREE.WebGLRenderer,gui:GUI, vthree:VThree) {
         this.renderer = renderer;
         this.gui = gui;
+        this.vthree = vthree;
         this.createScene();
+
 
         console.log("scene created!")
     }
@@ -139,6 +143,17 @@ export default class Scene05{
     // ******************************************************
     public update(time)
     {
+        if(this.vthree.oscValue.length > 0)
+        {
+
+
+            if( this.vthree.oscValue[1] == 112)
+
+            {
+                this.isAnimationStart = true;
+            }
+        }
+
 
         if(this.isAnimationStart)
         {
@@ -146,7 +161,7 @@ export default class Scene05{
             if(this.planeMoveSpeed >= 0.0005)
             {
 
-                this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.15;
+                this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.1;
             }
             this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
             this.startPlaneZ -= this.planeMoveSpeed;

@@ -29,6 +29,8 @@ export default class VThree
     public isUpdate:boolean = true;
 
     private debugCounter:number = 0;
+
+    public oscValue:any[] = [];
     constructor(startAlpha:number,transparent:boolean,config:any)
     {
 
@@ -288,6 +290,24 @@ export default class VThree
     // 最終的な描写処理と、アニメーション関数をワンフレームごとに実行
     public draw(time) {
 
+        //
+        if(this.oscValue.length > 0)
+        {
+            if(this.oscValue[0] == "/Note1" && this.oscValue[1] == 64 )
+            {
+                this.NUM = 1;
+                this.checkNum();
+            }
+
+            if(this.oscValue[0] == "/Note1" && this.oscValue[1] == 63 )
+            {
+                this.NUM = 0;
+                this.checkNum();
+            }
+        }
+
+
+
         this.stats.update(time);
         this.scenes[this.NUM].update(time,this.isUpdate);
         if(!this.scenes[this.NUM].isPostProcessing)
@@ -299,6 +319,9 @@ export default class VThree
         {
             requestAnimationFrame(this.draw.bind(this));
         }
+
+
+        this.oscValue = [];
 
     }
 }
