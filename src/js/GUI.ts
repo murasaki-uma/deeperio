@@ -8,6 +8,7 @@ export default class GUI
     public particle:any;
     public scene03:any;
     public image:any;
+    public parking:any;
     // public camera:any;
     constructor ()
     {
@@ -27,6 +28,7 @@ export default class GUI
         this.scene03 = this.gui.addFolder("scene03");
         this.particle = this.gui.addFolder("particle");
         this.image = this.gui.addFolder("image");
+        this.parking = this.gui.addFolder("parking");
 
         // this.camera = this.gui.addFolder('camera');
 
@@ -54,6 +56,8 @@ export default class GUI
         this.image.add(this.parameters,"image_positionX",-30.0,30.0);
         this.image.add(this.parameters,"image_positionY",-30.0,30.0);
         this.image.add(this.parameters,"image_positionZ",-32.0,32.0);
+
+        this.parking.add(this.parameters, "parking_vGlitchArea", 0.0,10.0);
     }
 
 

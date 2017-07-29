@@ -24,6 +24,8 @@ export default class GUIParameters
     public image_positionY:number = 0.0;
     public image_positionZ:number = 29.5;
 
+    public parking_vGlitchArea = 0.001;
+
 
     // public particleSpeed:number = 0.3;
     // public radiusSpeed:number = 0.1;

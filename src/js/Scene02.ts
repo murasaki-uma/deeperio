@@ -35,12 +35,14 @@ export default class Scene02{
     private clickCount = 0;
     private uniforms:any[] = [];
     private parking:any;
+    private gui:GUI;
 
 
 
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
         this.renderer = renderer;
+        this.gui = gui;
         this.createScene();
 
         console.log("scene created!")
@@ -57,8 +59,10 @@ export default class Scene02{
                 time: {value: 1.0},
                 texture: {value: null},
                 isDisplay:{value:true},
-                glitchVec:{value: new THREE.Vector3(1,0,0)},
-                glitchDist:{value: 0.0}
+                glitchVec:{value: new THREE.Vector3(Math.random(),Math.random(),Math.random()).normalize()},
+                glitchDist:{value: 0.0},
+                vGlitchArea:{value: 0.0},
+                animationNum:{value:0}
             });
         }
 
@@ -203,18 +207,18 @@ export default class Scene02{
         // {
             this.uniforms[0].texture.value = new THREE.TextureLoader().load(_imgs[0]);
         this.parking.children[0].children[0].material = new THREE.ShaderMaterial({
-                uniforms: this.uniforms,
+                uniforms: this.uniforms[0],
                 vertexShader: document.getElementById("vertex_parking").textContent,
                 fragmentShader: document.getElementById("fragment_parking").textContent,
                 wireframe: true,
                 transparent:true,
-                side:THREE.DoubleSide
+                side:THREE.DoubleSide,
+                linewidth:4
                 // drawBuffer:true
             });
-        // }
 
 
-        this.parking.children[0].children[0].material.wireframe = true;
+        // this.parking.children[0].children[0].material.wireframe = true;
 
 
 
@@ -232,7 +236,10 @@ export default class Scene02{
     // ******************************************************
     public keyUp(e:KeyboardEvent)
     {
-
+        if(e.key == "w")
+        {
+            this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
+        }
     }
 
     // ******************************************************
@@ -263,6 +270,7 @@ export default class Scene02{
         for(let i =0; i < this.uniforms.length; i++)
         {
             this.uniforms[i].time.value += 0.01;
+            this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;
         }
 
 

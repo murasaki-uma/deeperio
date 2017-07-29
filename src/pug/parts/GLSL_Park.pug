@@ -129,10 +129,26 @@ script(id="vertex_parking" type="x-shader/x-vertex").
     varying vec2 vUv;
     varying vec3 vPos;
     uniform float time;
+    float pi = 3.1415926;
+    uniform float vGlitchArea;
+    uniform int animationNum;
     void main()
     {
         vUv = uv;
-        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+        float rad = mod(time, pi) / 2.0;
+
+        vec3 noisePos = curlNoise(vec3(position.xy,time));
+
+        vec3 glitchpos = noisePos * vGlitchArea;
+
+        vec3 _position;
+        if(animationNum == 0)
+        {
+            _position = position.xyz + glitchpos;
+        }
+
+
+        vec4 mvPosition = modelViewMatrix * vec4( _position, 1.0 );
         gl_Position = projectionMatrix * mvPosition;
 
 
@@ -141,8 +157,8 @@ script(id="fragment_parking" type="x-shader/x-fragment").
     varying vec2 vUv;
     varying vec3 vPos;
     uniform bool isDisplay;
+    uniform sampler2D texture;
     void main( void ) {
-
 
           gl_FragColor = vec4(texture2D( texture, vUv ).rgb,1.0);
 
