@@ -9970,6 +9970,7 @@ var Scene01 = (function () {
         this.speedScaleZ = 0.0001;
         this.isWireGlitch = false;
         this.isEnd = false;
+        this.isEnd = false;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             if (!_this.isShaderReplace) {
                 // let materials = object.children[0].material.materials;
@@ -10231,6 +10232,8 @@ var Scene01 = (function () {
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
             }
             this.isWireGlitch = false;
+            this.isEnd = true;
+            this.isMoveToFront_Pal = true;
         }
         if (this.isScaleZ) {
             this.speedScaleZ *= 1.1;

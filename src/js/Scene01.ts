@@ -52,6 +52,7 @@ export default class Scene01{
     private speedScaleZ:number = 0.0001;
 
     private isWireGlitch:boolean = false;
+    private isEnd:boolean = false;
 
     private isEnd:boolean = false;
 
@@ -343,6 +344,7 @@ export default class Scene01{
 
     public reset()
     {
+
         this.isMoveToFront_Pal = false;
         this.isScaleZ = false;
         this.scaleZ = 1.0;
@@ -394,6 +396,7 @@ export default class Scene01{
 
 
         }
+
 
         if(this.vthree.oscValue[1] == 75)
         {
@@ -454,7 +457,12 @@ export default class Scene01{
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
             }
             this.isWireGlitch = false;
+
+
+            this.isEnd = true;
+            this.isMoveToFront_Pal = true;
         }
+
 
         if(this.isScaleZ)
         {
@@ -506,6 +514,7 @@ export default class Scene01{
             } else {
                 this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
             }
+
         }
 
         if(this.isImageUpdate)
