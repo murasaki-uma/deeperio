@@ -9964,11 +9964,12 @@ var Scene01 = (function () {
         this._threshold = 35.0;
         this.animationNum = 0.0;
         this.isShaderReplace = false;
-        this.moveFlontSpeed = 2.0;
+        this.moveFlontSpeed = 3.0;
         this.scaleZ = 1.0;
         this.isScaleZ = false;
         this.speedScaleZ = 0.0001;
         this.isWireGlitch = false;
+        this.isEnd = false;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             if (!_this.isShaderReplace) {
                 // let materials = object.children[0].material.materials;
@@ -9990,7 +9991,7 @@ var Scene01 = (function () {
                         isDisplay: { value: true },
                         glitchVec: { value: new THREE.Vector3(1, 0, 0) },
                         glitchDist: { value: 0.0 },
-                        aimationNum: { value: _this.animationNum }
+                        animationNum: { value: 0 }
                     };
                     _this.uniforms.push(_uniforms);
                     // materials[i].wireframe = true;
@@ -10153,6 +10154,10 @@ var Scene01 = (function () {
                 this.uniforms[i].animationNum.value = 1;
             }
         }
+        if (e.key == "e") {
+            this.isEnd = true;
+            console.log(this.isEnd);
+        }
     };
     // ******************************************************
     Scene01.prototype.mouseMove = function (e) {
@@ -10161,6 +10166,10 @@ var Scene01 = (function () {
     Scene01.prototype.onMouseDown = function (e) {
     };
     Scene01.prototype.reset = function () {
+        this.isMoveToFront_Pal = false;
+        this.isScaleZ = false;
+        this.scaleZ = 1.0;
+        this.speedScaleZ = 0.0001;
     };
     // ******************************************************
     Scene01.prototype.update = function (time) {
@@ -10168,6 +10177,7 @@ var Scene01 = (function () {
             this.reset();
         }
         if (this.vthree.oscValue[1] == 1) {
+            this.reset();
             // this.replaceShader_WireWave(this.pal_objects[0],0,false);
         }
         if (this.vthree.oscValue[1] == 65) {
@@ -10180,7 +10190,7 @@ var Scene01 = (function () {
         if (this.vthree.oscValue[1] == 74) {
             this.scaleZ = 0;
             this.isScaleZ = false;
-            this.scene.scale.set(1, 1, 1);
+            this.scene.scale.set(1.2, 1, 1);
             // this.isMoveToFront_Pal = false;
             // this.translateZ_pal = 0;
             // this.pal_objects[0
@@ -10208,7 +10218,15 @@ var Scene01 = (function () {
             }
         }
         if (this.vthree.oscValue[1] == 76) {
+            this.isEnd = true;
+            this.isMoveToFront_Pal = true;
+        }
+        if (this.isEnd) {
+            this.scene.rotation.setFromVector3(new THREE.Vector3(4.75, 0, 0));
             this.glitchDist = 0.0;
+            for (var i = 0; i < this.uniforms.length; i++) {
+                this.uniforms[i].animationNum.value = 1;
+            }
             for (var i = 0; i < this.uniforms.length; i++) {
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
             }
@@ -10218,7 +10236,7 @@ var Scene01 = (function () {
             this.speedScaleZ *= 1.1;
             this.scaleZ += this.speedScaleZ;
             if (this.scaleZ <= 25.0) {
-                this.scene.scale.set(1, 1, this.scaleZ);
+                this.scene.scale.set(1.2, 1, this.scaleZ);
             }
         }
         this.renderer.setClearColor(0x000000);
@@ -10237,12 +10255,18 @@ var Scene01 = (function () {
             this.uniforms[i].threshold.value = this._threshold; //Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
         }
         if (this.isMoveToFront_Pal) {
+            console.log(this.translateZ_pal);
             if (this.translateZ_pal < -60) {
                 this.translateZ_pal = 0.0;
             }
-            // this.moveFlontSpeed += (timerStep - this.moveFlontSpeed) * 0.1;
-            this.translateZ_pal -= timerStep;
-            this.pal_objects[0].translateZ(-this.translateZ_pal * 0.002);
+            this.moveFlontSpeed += (0.001 - this.moveFlontSpeed) * 0.3;
+            this.translateZ_pal -= this.moveFlontSpeed;
+            if (this.isEnd) {
+                this.pal_objects[0].translateY(this.translateZ_pal * 0.001);
+            }
+            else {
+                this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
+            }
         }
         if (this.isImageUpdate) {
             this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
@@ -10469,6 +10493,9 @@ var Scene02 = (function () {
     };
     // ******************************************************
     Scene02.prototype.keyDown = function (e) {
+        if (e.key == "s") {
+            this.isAnimationStart = true;
+        }
     };
     // ******************************************************
     Scene02.prototype.onMouseDown = function (e) {
@@ -10484,7 +10511,7 @@ var Scene02 = (function () {
         }
         if (this.isAnimationStart) {
             this.sceneZ += (-8.0 - this.sceneZ) * 0.15;
-            this.scene.position.set(0, 0, this.sceneZ);
+            this.scene.position.set(0, -2, this.sceneZ);
         }
         if (this.vthree.oscValue[1] == 68) {
             // for(let i =0; i < this.uniforms.length; i++)

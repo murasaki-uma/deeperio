@@ -303,6 +303,11 @@ export default class Scene02{
     public keyDown(e:KeyboardEvent)
     {
 
+        if(e.key == "s")
+        {
+            this.isAnimationStart = true;
+        }
+
     }
 
     // ******************************************************
@@ -334,7 +339,7 @@ export default class Scene02{
         if(this.isAnimationStart)
         {
             this.sceneZ += (-8.0 - this.sceneZ) * 0.15;
-            this.scene.position.set(0,0,this.sceneZ);
+            this.scene.position.set(0,-2,this.sceneZ);
         }
 
 

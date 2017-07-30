@@ -198,7 +198,7 @@ script(id="vertex_pal" type="x-shader/x-vertex").
 
 
         float theta = sin( time + p.z ) / 2.0;
-        float _s = sin(mod(time,3.141592));
+        float _s = sin(time);
 
         float c = cos( theta );
         float s = sin( theta )*_s * 1.5;

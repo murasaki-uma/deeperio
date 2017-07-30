@@ -6,7 +6,7 @@ const http = require('http').Server(app);
 const socketio = require('socket.io')(http);
 const PORT = 3333;
 
-var oscServer = new osc.Server(PORT, '192.168.100.100');
+var oscServer = new osc.Server(PORT, '192.168.100.103');
 console.log("start up");
 // console.log(oscServer);
 

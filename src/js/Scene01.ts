@@ -45,13 +45,16 @@ export default class Scene01{
     private vthree:VThree;
     private isShaderReplace:boolean = false;
 
-    private moveFlontSpeed:number =2.0;
+    private moveFlontSpeed:number =3.0;
 
     private scaleZ:number = 1.0;
     private isScaleZ:boolean = false;
     private speedScaleZ:number = 0.0001;
 
     private isWireGlitch:boolean = false;
+
+    private isEnd:boolean = false;
+
 
 
     // ******************************************************
@@ -159,7 +162,7 @@ export default class Scene01{
                     isDisplay:{value:true},
                     glitchVec:{value: new THREE.Vector3(1,0,0)},
                     glitchDist:{value: 0.0},
-                    aimationNum:{value:this.animationNum}
+                    animationNum:{value:0}
                 };
 
                 this.uniforms.push(_uniforms);
@@ -313,6 +316,14 @@ export default class Scene01{
         }
 
 
+        if(e.key == "e")
+        {
+
+            this.isEnd = true;
+            console.log(this.isEnd);
+        }
+
+
 
     }
 
@@ -332,8 +343,12 @@ export default class Scene01{
 
     public reset()
     {
-
+        this.isMoveToFront_Pal = false;
+        this.isScaleZ = false;
+        this.scaleZ = 1.0;
+        this.speedScaleZ = 0.0001;
     }
+
     // ******************************************************
 
 
@@ -347,6 +362,7 @@ export default class Scene01{
 
         if(this.vthree.oscValue[1] == 1)
         {
+            this.reset();
             // this.replaceShader_WireWave(this.pal_objects[0],0,false);
         }
 
@@ -354,6 +370,7 @@ export default class Scene01{
         {
             this.isMoveToFront_Pal = true;
         }
+
 
 
         if(this.vthree.oscValue[1] == 66)
@@ -368,7 +385,7 @@ export default class Scene01{
         {
             this.scaleZ = 0;
             this.isScaleZ = false;
-            this.scene.scale.set(1,1,1);
+            this.scene.scale.set(1.2,1,1);
             // this.isMoveToFront_Pal = false;
             // this.translateZ_pal = 0;
             // this.pal_objects[0
@@ -414,7 +431,22 @@ export default class Scene01{
         if(this.vthree.oscValue[1] == 76)
         {
 
+           this.isEnd = true;
+           this.isMoveToFront_Pal = true;
+
+
+        }
+
+        if(this.isEnd)
+        {
+            this.scene.rotation.setFromVector3(new THREE.Vector3(4.75,0,0));
             this.glitchDist = 0.0;
+
+            for(let i = 0; i < this.uniforms.length; i++)
+            {
+                this.uniforms[i].animationNum.value = 1;
+            }
+
 
             for(let i = 0; i < this.uniforms.length; i++)
             {
@@ -430,7 +462,7 @@ export default class Scene01{
             this.scaleZ += this.speedScaleZ;
             if(this.scaleZ <= 25.0)
             {
-                this.scene.scale.set(1,1,this.scaleZ);
+                this.scene.scale.set(1.2,1,this.scaleZ);
             }
 
         }
@@ -461,17 +493,19 @@ export default class Scene01{
 
         if(this.isMoveToFront_Pal)
         {
+            console.log(this.translateZ_pal);
             if(this.translateZ_pal < -60)
             {
                 this.translateZ_pal = 0.0;
             }
-            // this.moveFlontSpeed += (timerStep - this.moveFlontSpeed) * 0.1;
-            this.translateZ_pal -= timerStep;
-
-            this.pal_objects[0].translateZ(-this.translateZ_pal*0.002);
-
-
-
+            this.moveFlontSpeed += (0.001 - this.moveFlontSpeed) * 0.3;
+            this.translateZ_pal -= this.moveFlontSpeed;
+            if(this.isEnd)
+            {
+                this.pal_objects[0].translateY(this.translateZ_pal * 0.001);
+            } else {
+                this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
+            }
         }
 
         if(this.isImageUpdate)
