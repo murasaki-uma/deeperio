@@ -9969,6 +9969,7 @@ var Scene01 = (function () {
         this.isScaleZ = false;
         this.speedScaleZ = 0.0001;
         this.isWireGlitch = false;
+        this.isEnd = false;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             if (!_this.isShaderReplace) {
                 // let materials = object.children[0].material.materials;
@@ -10213,6 +10214,8 @@ var Scene01 = (function () {
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
             }
             this.isWireGlitch = false;
+            this.isEnd = true;
+            this.isMoveToFront_Pal = true;
         }
         if (this.isScaleZ) {
             this.speedScaleZ *= 1.1;
@@ -10243,6 +10246,9 @@ var Scene01 = (function () {
             // this.moveFlontSpeed += (timerStep - this.moveFlontSpeed) * 0.1;
             this.translateZ_pal -= timerStep;
             this.pal_objects[0].translateZ(-this.translateZ_pal * 0.002);
+            if (this.isEnd) {
+                this.pal_objects[0].translateY(this.translateZ_pal * 0.002);
+            }
         }
         if (this.isImageUpdate) {
             this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;

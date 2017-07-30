@@ -52,6 +52,7 @@ export default class Scene01{
     private speedScaleZ:number = 0.0001;
 
     private isWireGlitch:boolean = false;
+    private isEnd:boolean = false;
 
 
     // ******************************************************
@@ -333,7 +334,11 @@ export default class Scene01{
     public reset()
     {
 
+
+
     }
+
+
     // ******************************************************
 
 
@@ -377,6 +382,7 @@ export default class Scene01{
 
 
         }
+
 
         if(this.vthree.oscValue[1] == 75)
         {
@@ -422,7 +428,12 @@ export default class Scene01{
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
             }
             this.isWireGlitch = false;
+
+
+            this.isEnd = true;
+            this.isMoveToFront_Pal = true;
         }
+
 
         if(this.isScaleZ)
         {
@@ -469,6 +480,12 @@ export default class Scene01{
             this.translateZ_pal -= timerStep;
 
             this.pal_objects[0].translateZ(-this.translateZ_pal*0.002);
+
+            if(this.isEnd)
+            {
+                this.pal_objects[0].translateY(this.translateZ_pal*0.002);
+            }
+
 
 
 
