@@ -9958,7 +9958,7 @@ var Scene01 = (function () {
         this.TEXTURE_HEIGHT = 320;
         this.isMoveToFront_Pal = false;
         this.translateZ_pal = 0;
-        this.glitchDist = 0.0;
+        this.glitchDist = 0.01;
         this.isImageUpdate = false;
         this.time = 0;
         this._threshold = 35.0;
@@ -9968,6 +9968,7 @@ var Scene01 = (function () {
         this.scaleZ = 1.0;
         this.isScaleZ = false;
         this.speedScaleZ = 0.0001;
+        this.isWireGlitch = false;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             if (!_this.isShaderReplace) {
                 // let materials = object.children[0].material.materials;
@@ -10142,19 +10143,7 @@ var Scene01 = (function () {
             this._threshold = -40.0;
         }
         if (e.key == "w") {
-            if (Math.random() < 0.9) {
-                // this
-                for (var i = 0; i < this.materials.length; i++) {
-                    this.materials[i].wireframe = !this.materials[i].wireframe;
-                }
-                this.glitchDist += 0.04;
-                for (var i = 0; i < this.uniforms.length; i++) {
-                    if (this.glitchDist >= Math.PI / 2) {
-                        this.glitchDist = 0.0;
-                    }
-                    this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
-                }
-            }
+            this.isWireGlitch = true;
         }
         if (e.key == "z") {
             this.isScaleZ = true;
@@ -10189,27 +10178,48 @@ var Scene01 = (function () {
             this.isScaleZ = true;
         }
         if (this.vthree.oscValue[1] == 74) {
+            this.scaleZ = 0;
+            this.isScaleZ = false;
+            this.scene.scale.set(1, 1, 1);
+            // this.isMoveToFront_Pal = false;
+            // this.translateZ_pal = 0;
+            // this.pal_objects[0
+            // this.isWireGlitch = true;
+        }
+        if (this.vthree.oscValue[1] == 75) {
+            this.isWireGlitch = true;
+            // this.glitchDist = 0.01;
+        }
+        if (this.isWireGlitch) {
+            this.isMoveToFront_Pal = false;
+            for (var i = 0; i < this.materials.length; i++) {
+                this.materials[i].wireframe = !this.materials[i].wireframe;
+            }
             if (Math.random() < 0.9) {
                 // this
-                for (var i = 0; i < this.materials.length; i++) {
-                    this.materials[i].wireframe = !this.materials[i].wireframe;
-                }
-                this.glitchDist += 0.04;
+                this.glitchDist *= 1.1;
                 for (var i = 0; i < this.uniforms.length; i++) {
-                    if (this.glitchDist >= Math.PI / 2) {
-                        this.glitchDist = 0.0;
-                    }
-                    this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
+                    // if(this.glitchDist >= Math.PI/2)
+                    // {
+                    //     this.glitchDist = 0.0;
+                    // }
+                    this.uniforms[i].glitchDist.value = this.glitchDist * 20.0;
                 }
             }
         }
-        if (this.vthree.oscValue[1] == 75) {
-            // end animation
+        if (this.vthree.oscValue[1] == 76) {
+            this.glitchDist = 0.0;
+            for (var i = 0; i < this.uniforms.length; i++) {
+                this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
+            }
+            this.isWireGlitch = false;
         }
         if (this.isScaleZ) {
-            this.speedScaleZ *= 1.3;
+            this.speedScaleZ *= 1.1;
             this.scaleZ += this.speedScaleZ;
-            this.scene.scale.set(1, 1, this.scaleZ);
+            if (this.scaleZ <= 25.0) {
+                this.scene.scale.set(1, 1, this.scaleZ);
+            }
         }
         this.renderer.setClearColor(0x000000);
         if (this._threshold <= 40.0) {
@@ -10232,11 +10242,7 @@ var Scene01 = (function () {
             }
             // this.moveFlontSpeed += (timerStep - this.moveFlontSpeed) * 0.1;
             this.translateZ_pal -= timerStep;
-            this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
-            if (this.uniforms[0].animationNum == 1) {
-                this.pal_objects[0].translateZ_pal(0);
-                this.pal_objects[0].translateY(this.translateZ_pal * 0.04);
-            }
+            this.pal_objects[0].translateZ(-this.translateZ_pal * 0.002);
         }
         if (this.isImageUpdate) {
             this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
@@ -10283,6 +10289,11 @@ var Scene02 = (function () {
         this.clickCount = 0;
         this.uniforms = [];
         this.vglitchValue = 0.6;
+        this.isGlitch01 = false;
+        this.isGlitch02 = false;
+        this.isAnimationStart = false;
+        // ******************************************************
+        this.sceneZ = 0.0;
         this.renderer = renderer;
         this.gui = gui;
         this.vthree = vthree;
@@ -10462,7 +10473,6 @@ var Scene02 = (function () {
     // ******************************************************
     Scene02.prototype.onMouseDown = function (e) {
     };
-    // ******************************************************
     Scene02.prototype.update = function (time) {
         // let _t = this.uniforms[0].time.value % (Math.PI/2.0);
         // let p = this.scene.position;
@@ -10472,36 +10482,47 @@ var Scene02 = (function () {
             this.uniforms[i].time.value += 0.01;
             // this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;// * (Math.PI/2.0-_t);
         }
+        if (this.isAnimationStart) {
+            this.sceneZ += (-8.0 - this.sceneZ) * 0.15;
+            this.scene.position.set(0, 0, this.sceneZ);
+        }
         if (this.vthree.oscValue[1] == 68) {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
             this.uniforms[0].vGlitchArea.value = 0.3;
             // }
-            this.scene.position.set(0, -0.5, -4.0);
+            // this.scene.position.set(0,-0.5,-4.0);
         }
         if (this.vthree.oscValue[1] == 69) {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
-            this.scene.position.set(0, -1, -9.0);
+            // this.scene.position.set(0,-1,-9.0);
             // }
             this.parking.children[0].children[0].material.wireframe = true;
         }
         if (this.vthree.oscValue[1] == 70) {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
-            if (this.vglitchValue > 0.0) {
-                this.vglitchValue -= 0.001;
+            this.isGlitch01 = true;
+        }
+        if (this.isGlitch01) {
+            if (this.vglitchValue > 0.01) {
+                this.vglitchValue -= 0.003;
             }
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
-            this.scene.position.set(0, -1, -9.0);
+            // this.scene.position.set(0,-1,-9.0);
             // }
             this.parking.children[0].children[0].material.wireframe = true;
         }
         if (this.vthree.oscValue[1] == 71) {
-            this.vglitchValue += 0.01;
+            this.isGlitch01 = false;
+            this.isGlitch02 = true;
+        }
+        if (this.isGlitch02) {
+            this.vglitchValue *= 1.022;
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
-            this.scene.position.set(0, -1, -9.0);
+            // this.scene.position.set(0,-1,-9.0);
             this.parking.children[0].children[0].material.wireframe = true;
         }
         this.scene.rotateY(0.01);
@@ -10869,9 +10890,10 @@ var VThree = (function () {
             if (this.oscValue[1] == 67) {
                 this.NUM = 2;
                 this.checkNum();
+                this.scenes[2].isAnimationStart = true;
             }
             if (this.oscValue[1] == 72) {
-                this.NUM = 0;
+                this.NUM = 1;
                 this.checkNum();
             }
             if (this.oscValue[1] == 73) {

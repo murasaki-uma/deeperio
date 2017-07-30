@@ -41,6 +41,12 @@ export default class Scene02{
     private vglitchValue:number = 0.6;
 
 
+    private isGlitch01:boolean = false;
+    private isGlitch02:boolean = false;
+
+    private isAnimationStart:boolean = false;
+
+
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI, vthree:VThree) {
         this.renderer = renderer;
@@ -307,6 +313,8 @@ export default class Scene02{
     }
 
     // ******************************************************
+
+    private sceneZ:number = 0.0;
     public update(time)
     {
 
@@ -323,6 +331,16 @@ export default class Scene02{
         }
 
 
+        if(this.isAnimationStart)
+        {
+            this.sceneZ += (-8.0 - this.sceneZ) * 0.15;
+            this.scene.position.set(0,0,this.sceneZ);
+        }
+
+
+
+
+
 
         if(this.vthree.oscValue[1] == 68)
         {
@@ -330,7 +348,7 @@ export default class Scene02{
             // {
                 this.uniforms[0].vGlitchArea.value = 0.3;
             // }
-            this.scene.position.set(0,-0.5,-4.0);
+            // this.scene.position.set(0,-0.5,-4.0);
         }
 
         if(this.vthree.oscValue[1] == 69)
@@ -339,7 +357,7 @@ export default class Scene02{
             // {
                 this.uniforms[0].vGlitchArea.value = this.vglitchValue;
 
-                this.scene.position.set(0,-1,-9.0);
+                // this.scene.position.set(0,-1,-9.0);
             // }
             this.parking.children[0].children[0].material.wireframe = true;
         }
@@ -348,23 +366,34 @@ export default class Scene02{
         {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
-            if(this.vglitchValue > 0.0)
+           this.isGlitch01 = true;
+        }
+
+
+        if(this.isGlitch01)
+        {
+            if(this.vglitchValue > 0.01)
             {
-                this.vglitchValue -= 0.001;
+                this.vglitchValue -= 0.003;
             }
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
 
-            this.scene.position.set(0,-1,-9.0);
+            // this.scene.position.set(0,-1,-9.0);
             // }
             this.parking.children[0].children[0].material.wireframe = true;
         }
 
-
         if(this.vthree.oscValue[1] == 71)
         {
-            this.vglitchValue += 0.01;
+            this.isGlitch01 = false;
+            this.isGlitch02 = true;
+        }
+
+        if(this.isGlitch02)
+        {
+            this.vglitchValue *= 1.022;
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
-            this.scene.position.set(0,-1,-9.0);
+            // this.scene.position.set(0,-1,-9.0);
             this.parking.children[0].children[0].material.wireframe = true;
         }
 

@@ -315,11 +315,12 @@ export default class VThree
             {
                 this.NUM = 2;
                 this.checkNum();
+                this.scenes[2].isAnimationStart = true;
             }
 
             if(this.oscValue[1] == 72 )
             {
-                this.NUM = 0;
+                this.NUM = 1;
                 this.checkNum();
             }
 

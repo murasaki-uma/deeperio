@@ -28,7 +28,7 @@ export default class Scene01{
 
     private isMoveToFront_Pal:boolean = false;
     private translateZ_pal:number = 0;
-    private glitchDist:number = 0.0;
+    private glitchDist:number = 0.01;
 
     // textured
     private plane_geometry:THREE.PlaneGeometry;
@@ -50,6 +50,8 @@ export default class Scene01{
     private scaleZ:number = 1.0;
     private isScaleZ:boolean = false;
     private speedScaleZ:number = 0.0001;
+
+    private isWireGlitch:boolean = false;
 
 
     // ******************************************************
@@ -293,26 +295,7 @@ export default class Scene01{
 
         if(e.key == "w")
         {
-            if(Math.random() < 0.9)
-            {
-
-            // this
-            for(let i = 0; i < this.materials.length; i++)
-            {
-                this.materials[i].wireframe = !this.materials[i].wireframe;
-            }
-
-            this.glitchDist += 0.04;
-
-            for(let i = 0; i < this.uniforms.length; i++)
-            {
-                if(this.glitchDist >= Math.PI/2)
-                {
-                    this.glitchDist = 0.0;
-                }
-                this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
-            }
-            }
+            this.isWireGlitch = true;
         }
 
 
@@ -328,6 +311,8 @@ export default class Scene01{
                 this.uniforms[i].animationNum.value = 1;
             }
         }
+
+
 
     }
 
@@ -381,40 +366,73 @@ export default class Scene01{
 
         if(this.vthree.oscValue[1] == 74)
         {
+            this.scaleZ = 0;
+            this.isScaleZ = false;
+            this.scene.scale.set(1,1,1);
+            // this.isMoveToFront_Pal = false;
+            // this.translateZ_pal = 0;
+            // this.pal_objects[0
+            // this.isWireGlitch = true;
 
-            if(Math.random() < 0.9)
-            {
 
-                // this
-                for(let i = 0; i < this.materials.length; i++)
-                {
-                    this.materials[i].wireframe = !this.materials[i].wireframe;
-                }
-
-                this.glitchDist += 0.04;
-
-                for(let i = 0; i < this.uniforms.length; i++)
-                {
-                    if(this.glitchDist >= Math.PI/2)
-                    {
-                        this.glitchDist = 0.0;
-                    }
-                    this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
-                }
-            }
 
         }
 
         if(this.vthree.oscValue[1] == 75)
         {
-            // end animation
+            this.isWireGlitch = true;
+            // this.glitchDist = 0.01;
+        }
+
+        if(this.isWireGlitch)
+        {
+            this.isMoveToFront_Pal = false;
+            for(let i = 0; i < this.materials.length; i++)
+            {
+                this.materials[i].wireframe = !this.materials[i].wireframe;
+            }
+
+            if(Math.random() < 0.9)
+            {
+
+                // this
+
+
+                this.glitchDist *= 1.1;
+
+                for(let i = 0; i < this.uniforms.length; i++)
+                {
+                    // if(this.glitchDist >= Math.PI/2)
+                    // {
+                    //     this.glitchDist = 0.0;
+                    // }
+                    this.uniforms[i].glitchDist.value = this.glitchDist*20.0;
+                }
+            }
+        }
+
+        if(this.vthree.oscValue[1] == 76)
+        {
+
+            this.glitchDist = 0.0;
+
+            for(let i = 0; i < this.uniforms.length; i++)
+            {
+
+                this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
+            }
+            this.isWireGlitch = false;
         }
 
         if(this.isScaleZ)
         {
-            this.speedScaleZ *= 1.3;
+            this.speedScaleZ *= 1.1;
             this.scaleZ += this.speedScaleZ;
-            this.scene.scale.set(1,1,this.scaleZ);
+            if(this.scaleZ <= 25.0)
+            {
+                this.scene.scale.set(1,1,this.scaleZ);
+            }
+
         }
 
         this.renderer.setClearColor(0x000000);
@@ -450,15 +468,9 @@ export default class Scene01{
             // this.moveFlontSpeed += (timerStep - this.moveFlontSpeed) * 0.1;
             this.translateZ_pal -= timerStep;
 
-            this.pal_objects[0].translateZ(-this.translateZ_pal*0.001);
+            this.pal_objects[0].translateZ(-this.translateZ_pal*0.002);
 
-            if(this.uniforms[0].animationNum == 1)
 
-            {
-
-                this.pal_objects[0].translateZ_pal(0);
-                this.pal_objects[0].translateY(this.translateZ_pal*0.04);
-            }
 
         }
 
