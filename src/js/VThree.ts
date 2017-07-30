@@ -304,6 +304,33 @@ export default class VThree
                 this.NUM = 0;
                 this.checkNum();
             }
+
+            if(this.oscValue[1] == 1)
+            {
+                // this.scenes[1].replaceShader_WireWave(this.scenes[1].pal_objects[0],0,false);
+                // this.scenes[1].isShaderReplace = true;
+            }
+
+            if(this.oscValue[1] == 67 )
+            {
+                this.NUM = 2;
+                this.checkNum();
+            }
+
+            if(this.oscValue[1] == 72 )
+            {
+                this.NUM = 0;
+                this.checkNum();
+            }
+
+            if(this.oscValue[1] == 73 )
+            {
+                this.NUM = 2;
+                this.checkNum();
+            }
+
+
+
         }
 
 

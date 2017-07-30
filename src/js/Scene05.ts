@@ -29,6 +29,7 @@ export default class Scene05{
     private image_noiseSeed:number = 0.0;
     private image_noiseSpeed:number = 0.0;
     private vthree:VThree;
+    private clearColor:number = 0.0;
     // ******************************************************
     constructor(renderer:THREE.WebGLRenderer,gui:GUI, vthree:VThree) {
         this.renderer = renderer;
@@ -151,12 +152,15 @@ export default class Scene05{
 
             {
                 this.isAnimationStart = true;
+
             }
+
         }
 
 
         if(this.isAnimationStart)
         {
+
 
             if(this.planeMoveSpeed >= 0.0005)
             {
@@ -168,6 +172,11 @@ export default class Scene05{
 
             if(this.planeMoveSpeed <= 0.015)
             {
+                this.clearColor += (1.0 - this.clearColor) * 0.002;
+                let c = new THREE.Color(this.clearColor,this.clearColor,this.clearColor);
+                this.renderer.setClearColor(c);
+
+
                 this.planeRotateSpeed +=(0.0 - this.planeRotateSpeed) * 0.1;
                 this.plane.rotateX(-this.planeRotateSpeed);
                 this.plane.rotateY(-this.planeRotateSpeed/2);

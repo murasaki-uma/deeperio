@@ -79,12 +79,18 @@ class Main
                     // console.log(msg);
                     this.vthree.oscValue = msg;
                     $('#msg').text(this.vthree.oscValue);
+
+                    if(msg[1] == 0)
+                    {
+                        this.reset();
+                        console.log("restart")
+                    }
                 });
-                this.scene01 = new Scene01(this.vthree.renderer,this.gui);
-                // this.scene02 = new Scene02(this.vthree.renderer,this.gui);
+                this.scene01 = new Scene01(this.vthree.renderer,this.gui, this.vthree);
+                this.scene02 = new Scene02(this.vthree.renderer,this.gui, this.vthree);
                 // this.scene03 = new Scene03(this.vthree.renderer,this.gui);
                 // this.scene04 = new Scene04(this.vthree.renderer,this.gui);
-                // this.scene05 = new Scene05(this.vthree.renderer,this.gui, this.vthree);
+                this.scene05 = new Scene05(this.vthree.renderer,this.gui, this.vthree);
                 // this.post = new PostProcessingTest(this.vthree.renderer,this.gui);
 
                 // this.vthree.addScene(this.scene02);
@@ -92,9 +98,9 @@ class Main
                 // this.vthree.addScene(this.post);
 
                 //
-                // this.vthree.addScene(this.scene05);
+                this.vthree.addScene(this.scene05);
                 this.vthree.addScene(this.scene01);
-                // this.vthree.addScene(this.scene02);
+                this.vthree.addScene(this.scene02);
 
 
                 this.vthree.draw();
@@ -117,6 +123,11 @@ class Main
 
     public  update(time) {
         requestAnimationFrame(this.update.bind(this));
+    }
+
+    public reset()
+    {
+
     }
 
 }

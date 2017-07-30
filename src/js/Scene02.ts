@@ -3,6 +3,7 @@
  */
 import GUI from "./GUI";
 import white = THREE.ColorKeywords.white;
+import VThree from "./VThree";
 // *********** ひとつめのシーン *********** //
 class WireBox{
     constructor()
@@ -36,13 +37,15 @@ export default class Scene02{
     private uniforms:any[] = [];
     private parking:any;
     private gui:GUI;
-
+    private vthree;
+    private vglitchValue:number = 0.6;
 
 
     // ******************************************************
-    constructor(renderer:THREE.WebGLRenderer,gui:GUI) {
+    constructor(renderer:THREE.WebGLRenderer,gui:GUI, vthree:VThree) {
         this.renderer = renderer;
         this.gui = gui;
+        this.vthree = vthree;
         this.createScene();
 
         console.log("scene created!")
@@ -122,6 +125,8 @@ export default class Scene02{
         });
 
         this.createWireBox();
+
+
 
     }
 
@@ -203,7 +208,7 @@ export default class Scene02{
             uniforms: this.uniforms[0],
             vertexShader: document.getElementById("vertex_parking").textContent,
             fragmentShader: document.getElementById("fragment_parking").textContent,
-            wireframe: true,
+            wireframe: false,
             transparent:true,
             side:THREE.DoubleSide,
             linewidth:4
@@ -306,21 +311,62 @@ export default class Scene02{
     {
 
 
-        // if(this.uniforms[0].animationNum.value == 3)
-        // {
-            let _t = this.uniforms[0].time.value % (Math.PI/2.0);
-            let p = this.scene.position;
-            p.z = -_t * 5.0;
-            this.scene.position.set(p.x,p.y,p.z);
-        // }
-        // this.cube.rotation.x += 0.1;
-        // this.cube.rotation.y += 0.1;
+        // let _t = this.uniforms[0].time.value % (Math.PI/2.0);
+        // let p = this.scene.position;
+        // p.z = -_t * 5.0;
+        // this.scene.position.set(p.x,p.y,p.z);
+
         for(let i =0; i < this.uniforms.length; i++)
         {
             this.uniforms[i].time.value += 0.01;
-            this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;// * (Math.PI/2.0-_t);
+            // this.uniforms[i].vGlitchArea.value = this.gui.parameters.parking_vGlitchArea;// * (Math.PI/2.0-_t);
         }
 
+
+
+        if(this.vthree.oscValue[1] == 68)
+        {
+            // for(let i =0; i < this.uniforms.length; i++)
+            // {
+                this.uniforms[0].vGlitchArea.value = 0.3;
+            // }
+            this.scene.position.set(0,-0.5,-4.0);
+        }
+
+        if(this.vthree.oscValue[1] == 69)
+        {
+            // for(let i =0; i < this.uniforms.length; i++)
+            // {
+                this.uniforms[0].vGlitchArea.value = this.vglitchValue;
+
+                this.scene.position.set(0,-1,-9.0);
+            // }
+            this.parking.children[0].children[0].material.wireframe = true;
+        }
+
+        if(this.vthree.oscValue[1] == 70)
+        {
+            // for(let i =0; i < this.uniforms.length; i++)
+            // {
+            if(this.vglitchValue > 0.0)
+            {
+                this.vglitchValue -= 0.001;
+            }
+            this.uniforms[0].vGlitchArea.value = this.vglitchValue;
+
+            this.scene.position.set(0,-1,-9.0);
+            // }
+            this.parking.children[0].children[0].material.wireframe = true;
+        }
+
+
+        if(this.vthree.oscValue[1] == 71)
+        {
+            this.vglitchValue += 0.01;
+            this.uniforms[0].vGlitchArea.value = this.vglitchValue;
+            this.scene.position.set(0,-1,-9.0);
+            this.parking.children[0].children[0].material.wireframe = true;
+        }
 
         this.scene.rotateY(0.01);
         this.scene.rotateX(0.005);
