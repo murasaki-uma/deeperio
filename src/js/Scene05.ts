@@ -118,6 +118,21 @@ export default class Scene05{
 
     }
 
+    public reset()
+    {
+        this.isAnimationStart = false;
+        this.startPlaneZ = -0.1;
+        this.plane.position.set(0,0,-0.1);
+        this.plane.rotation.setFromVector3(new THREE.Vector3(0,0,0));
+        this.renderer.setClearColor(0x000000);
+        this.image_noiseSeed = this.gui.parameters.image_noiseSeed;
+        this.image_noiseScale = this.gui.parameters.image_noiseScale;
+        this.image_noiseSpeed = this.gui.parameters.image_speed;
+        this.planeMoveSpeed = 0.05;
+        this.planeRotateSpeed = 0.02;
+        this.clearColor = 0.0;
+    }
+
     // ******************************************************
     public keyDown(e:KeyboardEvent)
     {
@@ -130,6 +145,11 @@ export default class Scene05{
         if(e.key == "s")
         {
             this.isAnimationStart = !this.isAnimationStart;
+        }
+
+        if(e.key =="r")
+        {
+            this.reset();
         }
 
     }
@@ -167,12 +187,12 @@ export default class Scene05{
 
                 this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.1;
             }
-            this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
+            // this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
             this.startPlaneZ -= this.planeMoveSpeed;
 
             if(this.planeMoveSpeed <= 0.015)
             {
-                this.clearColor += (1.0 - this.clearColor) * 0.002;
+                this.clearColor += (1.0 - this.clearColor) * 0.0015;
                 let c = new THREE.Color(this.clearColor,this.clearColor,this.clearColor);
                 this.renderer.setClearColor(c);
 
@@ -185,19 +205,14 @@ export default class Scene05{
 
             if(this.planeMoveSpeed <= 0.001)
             {
-                this.image_noiseSeed +=(0.01 - this.image_noiseSeed ) * 0.01;
-                this.image_noiseScale +=(0.01 - this.image_noiseScale ) * 0.01;
-                this.image_noiseSpeed +=(0.01 - this.image_noiseSpeed ) * 0.01;
+                this.image_noiseSeed +=(0.01 - this.image_noiseSeed ) * 0.005;
+                this.image_noiseScale +=(0.01 - this.image_noiseScale ) * 0.005;
+                this.image_noiseSpeed +=(0.01 - this.image_noiseSpeed ) * 0.005;
             }
 
 
         }
 
-        // if(this.isImageUpdate)
-        // {
-        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
         this.image_uniform.noiseScale.value = this.image_noiseScale;
         this.image_uniform.noiseSeed.value = this.image_noiseSeed;
         this.image_uniform.time.value += this.image_noiseSpeed;
@@ -219,8 +234,7 @@ export default class Scene05{
             this.startPlaneZ
         );
 
-        // this.plane.scale.set(14,14,14);
-        // this.composer.render();
+
 
 
     }

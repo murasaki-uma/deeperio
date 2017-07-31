@@ -58,7 +58,13 @@ export default class VThree
     {
     }
 
-
+    public reset()
+    {
+        for(let i = 0; i < this.scenes.length; i++)
+        {
+            this.scenes[i].reset();
+        }
+    }
     public init()
     {
 
@@ -150,6 +156,7 @@ export default class VThree
             this.scenes[this.NUM].mouseMove(e);
         }
     }
+
 
     public onKeyDown = (e:KeyboardEvent) => {
 

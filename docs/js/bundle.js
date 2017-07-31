@@ -10640,6 +10640,19 @@ var Scene05 = (function () {
     // ******************************************************
     Scene05.prototype.mouseMove = function (e) {
     };
+    Scene05.prototype.reset = function () {
+        this.isAnimationStart = false;
+        this.startPlaneZ = -0.1;
+        this.plane.position.set(0, 0, -0.1);
+        this.plane.rotation.setFromVector3(new THREE.Vector3(0, 0, 0));
+        this.renderer.setClearColor(0x000000);
+        this.image_noiseSeed = this.gui.parameters.image_noiseSeed;
+        this.image_noiseScale = this.gui.parameters.image_noiseScale;
+        this.image_noiseSpeed = this.gui.parameters.image_speed;
+        this.planeMoveSpeed = 0.05;
+        this.planeRotateSpeed = 0.02;
+        this.clearColor = 0.0;
+    };
     // ******************************************************
     Scene05.prototype.keyDown = function (e) {
         if (e.key == "p") {
@@ -10647,6 +10660,9 @@ var Scene05 = (function () {
         }
         if (e.key == "s") {
             this.isAnimationStart = !this.isAnimationStart;
+        }
+        if (e.key == "r") {
+            this.reset();
         }
     };
     // ******************************************************
@@ -10663,10 +10679,10 @@ var Scene05 = (function () {
             if (this.planeMoveSpeed >= 0.0005) {
                 this.planeMoveSpeed += (0.0004 - this.planeMoveSpeed) * 0.1;
             }
-            this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
+            // this.gui.parameters.image_positionZ -= this.planeMoveSpeed;
             this.startPlaneZ -= this.planeMoveSpeed;
             if (this.planeMoveSpeed <= 0.015) {
-                this.clearColor += (1.0 - this.clearColor) * 0.002;
+                this.clearColor += (1.0 - this.clearColor) * 0.0015;
                 var c = new THREE.Color(this.clearColor, this.clearColor, this.clearColor);
                 this.renderer.setClearColor(c);
                 this.planeRotateSpeed += (0.0 - this.planeRotateSpeed) * 0.1;
@@ -10675,16 +10691,11 @@ var Scene05 = (function () {
                 this.plane.rotateZ(this.planeRotateSpeed / 3);
             }
             if (this.planeMoveSpeed <= 0.001) {
-                this.image_noiseSeed += (0.01 - this.image_noiseSeed) * 0.01;
-                this.image_noiseScale += (0.01 - this.image_noiseScale) * 0.01;
-                this.image_noiseSpeed += (0.01 - this.image_noiseSpeed) * 0.01;
+                this.image_noiseSeed += (0.01 - this.image_noiseSeed) * 0.005;
+                this.image_noiseScale += (0.01 - this.image_noiseScale) * 0.005;
+                this.image_noiseSpeed += (0.01 - this.image_noiseSpeed) * 0.005;
             }
         }
-        // if(this.isImageUpdate)
-        // {
-        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
         this.image_uniform.noiseScale.value = this.image_noiseScale;
         this.image_uniform.noiseSeed.value = this.image_noiseSeed;
         this.image_uniform.time.value += this.image_noiseSpeed;
@@ -10696,8 +10707,6 @@ var Scene05 = (function () {
         this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, 
         //this.gui.parameters.image_positionZ,
         this.startPlaneZ);
-        // this.plane.scale.set(14,14,14);
-        // this.composer.render();
     };
     return Scene05;
 }());
@@ -10842,6 +10851,11 @@ var VThree = (function () {
         document.addEventListener("mousemove", this.onMouseMove, true);
     }
     VThree.prototype.initOrbitContorols = function () {
+    };
+    VThree.prototype.reset = function () {
+        for (var i = 0; i < this.scenes.length; i++) {
+            this.scenes[i].reset();
+        }
     };
     VThree.prototype.init = function () {
         // Rendererを作る
