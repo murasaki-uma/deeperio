@@ -39,12 +39,17 @@ export default class Scene02{
     private gui:GUI;
     private vthree;
     private vglitchValue:number = 0.6;
-
+    private sceneZ:number = 0.0;
 
     private isGlitch01:boolean = false;
     private isGlitch02:boolean = false;
 
     private isAnimationStart:boolean = false;
+
+    private isDebug68:boolean = false;
+    private isDebug69:boolean = false;
+    private isDebug70:boolean = false;
+    private isDebug71:boolean = false;
 
 
     // ******************************************************
@@ -269,27 +274,24 @@ export default class Scene02{
     public keyUp(e:KeyboardEvent)
     {
 
-        if(e.key == "w")
-        {
-            this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
-        }
-
-        if(e.key == "r")
-        {
-            this.replaceShader();
-        }
+        // if(e.key == "w")
+        // {
+        //     this.parking.children[0].children[0].material.wireframe = !this.parking.children[0].children[0].material.wireframe;
+        // }
 
 
-        if(e.key == "d")
-        {
-            for(let i = 0; i < this.uniforms.length; i++)
-            {
 
-                let num = this.uniforms[i].animationNum.value;
-                console.log(num);
-                this.uniforms[i].animationNum.value = (num+1)%4;
-            }
-        }
+
+        // if(e.key == "d")
+        // {
+        //     for(let i = 0; i < this.uniforms.length; i++)
+        //     {
+        //
+        //         let num = this.uniforms[i].animationNum.value;
+        //         console.log(num);
+        //         this.uniforms[i].animationNum.value = (num+1)%4;
+        //     }
+        // }
 
     }
 
@@ -303,10 +305,54 @@ export default class Scene02{
     public keyDown(e:KeyboardEvent)
     {
 
+        if(e.key == "R")
+        {
+            this.replaceShader();
+        }
+
         if(e.key == "s")
         {
             this.isAnimationStart = true;
         }
+
+        if(e.key == "r")
+        {
+            this.reset();
+        }
+
+
+        if(e.key == "z")
+        {
+            this.isDebug68 = true;
+            this.isDebug69 = false;
+            this.isDebug70 = false;
+            this.isDebug71 = false;
+        }
+
+        if(e.key == "x")
+        {
+            this.isDebug68 = false;
+            this.isDebug69 = true;
+            this.isDebug70 = false
+            this.isDebug71 = false;
+
+        }
+        if(e.key == "c")
+        {
+            this.isDebug68 = false;
+            this.isDebug69 = false;
+            this.isDebug70 = true;
+            this.isDebug71 = false;
+        }
+
+        if(e.key == "v")
+        {
+            this.isDebug68 = false;
+            this.isDebug69 = false;
+            this.isDebug70 = false;
+            this.isDebug71 = true;
+        }
+
 
     }
 
@@ -317,9 +363,27 @@ export default class Scene02{
 
     }
 
+    public reset()
+    {
+        this.sceneZ = 0.0;
+        this.scene.position.set(0,-2,this.sceneZ);
+        this.uniforms[0].time.value =0;
+        this.uniforms[0].vGlitchArea.value = 0;
+        this.parking.children[0].children[0].material.wireframe = false;
+        this.vglitchValue = 0.6;
+        this.isGlitch01 = false;
+        this.isGlitch02 = false;
+        this.isAnimationStart = false;
+        this.scene.rotation.setFromVector3(new THREE.Vector3(0,0,0));
+        this.isDebug68 = false;
+        this.isDebug69 = false;
+        this.isDebug70 = false;
+        this.isDebug71 = false;
+    }
+
     // ******************************************************
 
-    private sceneZ:number = 0.0;
+
     public update(time)
     {
 
@@ -347,7 +411,7 @@ export default class Scene02{
 
 
 
-        if(this.vthree.oscValue[1] == 68)
+        if(this.vthree.oscValue[1] == 68 || this.isDebug68)
         {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
@@ -356,7 +420,7 @@ export default class Scene02{
             // this.scene.position.set(0,-0.5,-4.0);
         }
 
-        if(this.vthree.oscValue[1] == 69)
+        if(this.vthree.oscValue[1] == 69 || this.isDebug69)
         {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
@@ -367,7 +431,7 @@ export default class Scene02{
             this.parking.children[0].children[0].material.wireframe = true;
         }
 
-        if(this.vthree.oscValue[1] == 70)
+        if(this.vthree.oscValue[1] == 70 || this.isDebug70)
         {
             // for(let i =0; i < this.uniforms.length; i++)
             // {
@@ -388,7 +452,7 @@ export default class Scene02{
             this.parking.children[0].children[0].material.wireframe = true;
         }
 
-        if(this.vthree.oscValue[1] == 71)
+        if(this.vthree.oscValue[1] == 71 || this.isDebug71)
         {
             this.isGlitch01 = false;
             this.isGlitch02 = true;
@@ -397,6 +461,7 @@ export default class Scene02{
         if(this.isGlitch02)
         {
             this.vglitchValue *= 1.022;
+            console.log(this.vglitchValue);
             this.uniforms[0].vGlitchArea.value = this.vglitchValue;
             // this.scene.position.set(0,-1,-9.0);
             this.parking.children[0].children[0].material.wireframe = true;
@@ -404,6 +469,7 @@ export default class Scene02{
 
         this.scene.rotateY(0.01);
         this.scene.rotateX(0.005);
+
 
     }
 
