@@ -10801,6 +10801,14 @@ var VThree = (function () {
                 }
                 if (e.code == "Space") {
                     // this.StartStop();
+                    if (__WEBPACK_IMPORTED_MODULE_0_jquery__(".blackScreen").hasClass("start")) {
+                        __WEBPACK_IMPORTED_MODULE_0_jquery__(".blackScreen").removeClass("start");
+                        __WEBPACK_IMPORTED_MODULE_0_jquery__(".blackScreen").addClass("end");
+                    }
+                    else {
+                        __WEBPACK_IMPORTED_MODULE_0_jquery__(".blackScreen").addClass("start");
+                        __WEBPACK_IMPORTED_MODULE_0_jquery__(".blackScreen").removeClass("end");
+                    }
                 }
                 if (_this.debugCounter >= 5) {
                     _this.changeDebug();

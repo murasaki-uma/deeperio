@@ -195,6 +195,15 @@ export default class VThree
 
             if (e.code == "Space") {
                 // this.StartStop();
+               if($(".blackScreen").hasClass("start"))
+               {
+                   $(".blackScreen").removeClass("start");
+                   $(".blackScreen").addClass("end");
+               } else
+               {
+                   $(".blackScreen").addClass("start");
+                   $(".blackScreen").removeClass("end");
+               }
 
             }
 
