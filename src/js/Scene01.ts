@@ -26,9 +26,7 @@ export default class Scene01{
     private TEXTURE_WIDTH:number = 320;
     private TEXTURE_HEIGHT:number = 320;
 
-    private isMoveToFront_Pal:boolean = false;
-    private translateZ_pal:number = 0;
-    private glitchDist:number = 0.01;
+
 
     // textured
     private plane_geometry:THREE.PlaneGeometry;
@@ -37,23 +35,24 @@ export default class Scene01{
     private image_uniform:any;
     private isImageUpdate:boolean = false;
 
+
+    private scaleZ:number = 1.0;
+    private isScaleZ:boolean = false;
+    private speedScaleZ:number = 0.0001;
+
+    private isMoveToFront_Pal:boolean = false;
+    private translateZ_pal:number = 0;
+    private glitchDist:number = 0.01;
     private time:number = 0;
-
-
-    private _threshold:number = 35.0;
+    private _threshold:number = -999.0;
     private animationNum:number = 0.0;
     private vthree:VThree;
     private isShaderReplace:boolean = false;
 
     private moveFlontSpeed:number =3.0;
 
-    private scaleZ:number = 1.0;
-    private isScaleZ:boolean = false;
-    private speedScaleZ:number = 0.0001;
 
     private isWireGlitch:boolean = false;
-    private isEnd:boolean = false;
-
     private isEnd:boolean = false;
 
 
@@ -86,7 +85,7 @@ export default class Scene01{
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.cube = new THREE.Mesh(this.geometry, this.material);
         // メッシュをシーンに追加
-        this.scene.add(this.cube);
+        // this.scene.add(this.cube);
 
         let ambient = new THREE.AmbientLight(0xffffff);
         this.scene.add(ambient);
@@ -117,7 +116,7 @@ export default class Scene01{
                 var object = collada.scene;
                 console.log(object);
                 object.position.y = -1;
-                object.position.x = 0;
+                object.position.x = -0.6;
 
                 //object.rotation.y = 0.08 + Math.PI;
                 this.pal_objects.push(object);
@@ -133,7 +132,7 @@ export default class Scene01{
         this.camera = new THREE.PerspectiveCamera(105, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
         this.scene.scale.set(1.2, 1, 1);
-        this.camera.position.z = 30
+        this.camera.position.z = 30;
         this.initComputeRenderer();
     }
     public replaceShader_WireWave=(object:any,isTransparent:number, isWire:Boolean)=>
@@ -299,13 +298,13 @@ export default class Scene01{
 
         if(e.key == "w")
         {
-            this.isWireGlitch = true;
+            this.isWireGlitch = !this.isWireGlitch;
         }
 
 
         if(e.key == "z")
         {
-            this.isScaleZ = true;
+            this.isScaleZ = !this.isScaleZ;
         }
 
         if(e.key == "a")
@@ -320,11 +319,15 @@ export default class Scene01{
         if(e.key == "e")
         {
 
-            this.isEnd = true;
-            console.log(this.isEnd);
+            this.isEnd = !this.isEnd;
+            // console.log(this.isEnd);
         }
 
+        if(e.key == "r")
 
+        {
+            this.reset();
+        }
 
     }
 
@@ -349,6 +352,36 @@ export default class Scene01{
         this.isScaleZ = false;
         this.scaleZ = 1.0;
         this.speedScaleZ = 0.0001;
+        this.isMoveToFront_Pal = false;
+        this.translateZ_pal = 0;
+        this.glitchDist = 0.01;
+        this.time = 0;
+        this._threshold = 999.0;
+        this.animationNum = 0.0;
+        this.moveFlontSpeed =3.0;
+        this.isWireGlitch = false;
+
+        this.isEnd = false;
+        this.scene.scale.set(1.2,1,this.scaleZ);
+        // this.scene.position.set(1.2,1,this.scaleZ);
+
+        for(let i = 0; i < this.uniforms.length; i++)
+        {
+
+            this.uniforms[i].glitchDist.value = 0;
+            this.materials[i].wireframe = false;
+            this.uniforms[i].animationNum.value = 0;
+        }
+
+        for(let i = 0; i < this.pal_objects.length; i++)
+        {
+            this.pal_objects[i].position.set(-0.6,-1,0);
+        }
+
+
+        this.pal_objects[0].translateY(0);
+        this.pal_objects[0].translateZ(0);
+        this.scene.rotation.setFromVector3(new THREE.Vector3(0,0,0));
     }
 
     // ******************************************************
@@ -448,18 +481,14 @@ export default class Scene01{
             for(let i = 0; i < this.uniforms.length; i++)
             {
                 this.uniforms[i].animationNum.value = 1;
-            }
-
-
-            for(let i = 0; i < this.uniforms.length; i++)
-            {
 
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist))*20.0;
+                this.materials[i].wireframe = false;
             }
             this.isWireGlitch = false;
 
 
-            this.isEnd = true;
+            // this.isEnd = true;
             this.isMoveToFront_Pal = true;
         }
 
@@ -476,15 +505,15 @@ export default class Scene01{
         }
 
         this.renderer.setClearColor(0x000000);
-        if(this._threshold <= 40.0)
-        {
-            this._threshold += 0.2;
-        }
+        // if(this._threshold <= 40.0)
+        // {
+        //     this._threshold += 0.2;
+        // }
         this.time++;
 
         this.gpuCompute.compute();
-        this.cube.position.z = this.gui.parameters.threshold;
-        this.cube.scale.set(0,0,0);
+        // this.cube.position.z = this.gui.parameters.threshold;
+        // this.cube.scale.set(0,0,0);
         let timerStep:number = 0.004;
 
         for(let i = 0; i < this.uniforms.length; i++)
@@ -494,7 +523,7 @@ export default class Scene01{
 
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget( this.positionVariable ).texture;
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = this._threshold ;//Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+            // this.uniforms[i].threshold.value = this._threshold ;//Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
 
         }
 
@@ -510,33 +539,36 @@ export default class Scene01{
             this.translateZ_pal -= this.moveFlontSpeed;
             if(this.isEnd)
             {
+
+                this.pal_objects[0].translateZ(0);
                 this.pal_objects[0].translateY(this.translateZ_pal * 0.001);
             } else {
+                this.pal_objects[0].translateY(0);
                 this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
             }
 
         }
 
-        if(this.isImageUpdate)
-        {
-            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-            this.image_uniform.time.value += this.gui.parameters.image_speed;
-            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
-            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
-            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
-            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
-        }
+        // if(this.isImageUpdate)
+        // {
+        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
+        //     this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+        //     this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+        //     this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+        //     this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        // }
 
 
-
-        this.plane.position.set (
-            this.gui.parameters.image_positionX,
-            this.gui.parameters.image_positionY,
-            this.gui.parameters.image_positionZ,
-        );
-
-        this.plane.scale.set(14,14,14);
+        //
+        // this.plane.position.set (
+        //     this.gui.parameters.image_positionX,
+        //     this.gui.parameters.image_positionY,
+        //     this.gui.parameters.image_positionZ,
+        // );
+        //
+        // this.planee.scale.set(14,14,14);
         //this.scene.position.z += 0.1;
 
         // this.cube.rotation.x += 0.1;

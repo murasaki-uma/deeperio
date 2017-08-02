@@ -9956,20 +9956,19 @@ var Scene01 = (function () {
         this.pal_objects = [];
         this.TEXTURE_WIDTH = 320;
         this.TEXTURE_HEIGHT = 320;
-        this.isMoveToFront_Pal = false;
-        this.translateZ_pal = 0;
-        this.glitchDist = 0.01;
         this.isImageUpdate = false;
-        this.time = 0;
-        this._threshold = 35.0;
-        this.animationNum = 0.0;
-        this.isShaderReplace = false;
-        this.moveFlontSpeed = 3.0;
         this.scaleZ = 1.0;
         this.isScaleZ = false;
         this.speedScaleZ = 0.0001;
+        this.isMoveToFront_Pal = false;
+        this.translateZ_pal = 0;
+        this.glitchDist = 0.01;
+        this.time = 0;
+        this._threshold = -999.0;
+        this.animationNum = 0.0;
+        this.isShaderReplace = false;
+        this.moveFlontSpeed = 3.0;
         this.isWireGlitch = false;
-        this.isEnd = false;
         this.isEnd = false;
         this.replaceShader_WireWave = function (object, isTransparent, isWire) {
             if (!_this.isShaderReplace) {
@@ -10032,7 +10031,7 @@ var Scene01 = (function () {
         // 上記作成のジオメトリーとマテリアルを合わせてメッシュを生成
         this.cube = new THREE.Mesh(this.geometry, this.material);
         // メッシュをシーンに追加
-        this.scene.add(this.cube);
+        // this.scene.add(this.cube);
         var ambient = new THREE.AmbientLight(0xffffff);
         this.scene.add(ambient);
         var dLight = new THREE.DirectionalLight(0xffffff, 0.2);
@@ -10056,7 +10055,7 @@ var Scene01 = (function () {
                 var object = collada.scene;
                 console.log(object);
                 object.position.y = -1;
-                object.position.x = 0;
+                object.position.x = -0.6;
                 //object.rotation.y = 0.08 + Math.PI;
                 _this.pal_objects.push(object);
                 _this.scene.add(object);
@@ -10145,10 +10144,10 @@ var Scene01 = (function () {
             this._threshold = -40.0;
         }
         if (e.key == "w") {
-            this.isWireGlitch = true;
+            this.isWireGlitch = !this.isWireGlitch;
         }
         if (e.key == "z") {
-            this.isScaleZ = true;
+            this.isScaleZ = !this.isScaleZ;
         }
         if (e.key == "a") {
             for (var i = 0; i < this.uniforms.length; i++) {
@@ -10156,8 +10155,11 @@ var Scene01 = (function () {
             }
         }
         if (e.key == "e") {
-            this.isEnd = true;
-            console.log(this.isEnd);
+            this.isEnd = !this.isEnd;
+            // console.log(this.isEnd);
+        }
+        if (e.key == "r") {
+            this.reset();
         }
     };
     // ******************************************************
@@ -10171,6 +10173,28 @@ var Scene01 = (function () {
         this.isScaleZ = false;
         this.scaleZ = 1.0;
         this.speedScaleZ = 0.0001;
+        this.isMoveToFront_Pal = false;
+        this.translateZ_pal = 0;
+        this.glitchDist = 0.01;
+        this.time = 0;
+        this._threshold = 999.0;
+        this.animationNum = 0.0;
+        this.moveFlontSpeed = 3.0;
+        this.isWireGlitch = false;
+        this.isEnd = false;
+        this.scene.scale.set(1.2, 1, this.scaleZ);
+        // this.scene.position.set(1.2,1,this.scaleZ);
+        for (var i = 0; i < this.uniforms.length; i++) {
+            this.uniforms[i].glitchDist.value = 0;
+            this.materials[i].wireframe = false;
+            this.uniforms[i].animationNum.value = 0;
+        }
+        for (var i = 0; i < this.pal_objects.length; i++) {
+            this.pal_objects[i].position.set(-0.6, -1, 0);
+        }
+        this.pal_objects[0].translateY(0);
+        this.pal_objects[0].translateZ(0);
+        this.scene.rotation.setFromVector3(new THREE.Vector3(0, 0, 0));
     };
     // ******************************************************
     Scene01.prototype.update = function (time) {
@@ -10227,12 +10251,11 @@ var Scene01 = (function () {
             this.glitchDist = 0.0;
             for (var i = 0; i < this.uniforms.length; i++) {
                 this.uniforms[i].animationNum.value = 1;
-            }
-            for (var i = 0; i < this.uniforms.length; i++) {
                 this.uniforms[i].glitchDist.value = Math.abs(Math.sin(this.glitchDist)) * 20.0;
+                this.materials[i].wireframe = false;
             }
             this.isWireGlitch = false;
-            this.isEnd = true;
+            // this.isEnd = true;
             this.isMoveToFront_Pal = true;
         }
         if (this.isScaleZ) {
@@ -10243,19 +10266,20 @@ var Scene01 = (function () {
             }
         }
         this.renderer.setClearColor(0x000000);
-        if (this._threshold <= 40.0) {
-            this._threshold += 0.2;
-        }
+        // if(this._threshold <= 40.0)
+        // {
+        //     this._threshold += 0.2;
+        // }
         this.time++;
         this.gpuCompute.compute();
-        this.cube.position.z = this.gui.parameters.threshold;
-        this.cube.scale.set(0, 0, 0);
+        // this.cube.position.z = this.gui.parameters.threshold;
+        // this.cube.scale.set(0,0,0);
         var timerStep = 0.004;
         for (var i = 0; i < this.uniforms.length; i++) {
             //console.log(this.uniforms[i]);
             this.uniforms[i].texturePosition.value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
             this.uniforms[i].time.value += timerStep;
-            this.uniforms[i].threshold.value = this._threshold; //Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
+            // this.uniforms[i].threshold.value = this._threshold ;//Math.sin(time*0.0005)*30;//this.gui.parameters.threshold;
         }
         if (this.isMoveToFront_Pal) {
             console.log(this.translateZ_pal);
@@ -10265,23 +10289,32 @@ var Scene01 = (function () {
             this.moveFlontSpeed += (0.001 - this.moveFlontSpeed) * 0.3;
             this.translateZ_pal -= this.moveFlontSpeed;
             if (this.isEnd) {
+                this.pal_objects[0].translateZ(0);
                 this.pal_objects[0].translateY(this.translateZ_pal * 0.001);
             }
             else {
+                this.pal_objects[0].translateY(0);
                 this.pal_objects[0].translateZ(-this.translateZ_pal * 0.001);
             }
         }
-        if (this.isImageUpdate) {
-            this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
-            this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
-            this.image_uniform.time.value += this.gui.parameters.image_speed;
-            this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
-            this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
-            this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
-            this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
-        }
-        this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, this.gui.parameters.image_positionZ);
-        this.plane.scale.set(14, 14, 14);
+        // if(this.isImageUpdate)
+        // {
+        //     this.image_uniform.noiseScale.value = this.gui.parameters.image_noiseScale;
+        //     this.image_uniform.noiseSeed.value = this.gui.parameters.image_noiseSeed;
+        //     this.image_uniform.time.value += this.gui.parameters.image_speed;
+        //     this.image_uniform.noiseScale_vertex.value = this.gui.parameters.image_noiseScale_vertex;
+        //     this.image_uniform.noiseSeed_vertex.value = this.gui.parameters.image_noiseSeed_vertex;
+        //     this.image_uniform.time_scale_vertex.value = this.gui.parameters.image_speed_scale__vertex;
+        //     this.image_uniform.distance_threshold.value = this.gui.parameters.image_distance_threshold;
+        // }
+        //
+        // this.plane.position.set (
+        //     this.gui.parameters.image_positionX,
+        //     this.gui.parameters.image_positionY,
+        //     this.gui.parameters.image_positionZ,
+        // );
+        //
+        // this.planee.scale.set(14,14,14);
         //this.scene.position.z += 0.1;
         // this.cube.rotation.x += 0.1;
         // this.cube.rotation.y += 0.1;

@@ -207,8 +207,11 @@ script(id="vertex_pal" type="x-shader/x-vertex").
         mat3 m = mat3( c, s, 0, 0, 0, 1.0, -s, c, 0.0 );
         if(animationNum == 1)
         {
-            p *= m;
+
+           p *= m;
+
         }
+
 
         vPos = p;
 
