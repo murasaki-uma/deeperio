@@ -28,6 +28,7 @@ import "./shaders/HorizontalBlurShader.js";
 import "./shaders/SepiaShader.js";
 import "./shaders/VerticalBlurShader.js";
 import "./shaders/VignetteShader.js";
+import "./shaders/RGBShiftShader.js"
 
 
 import "./postprocessing/EffectComposer.js";

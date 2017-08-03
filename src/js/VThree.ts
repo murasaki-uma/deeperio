@@ -76,6 +76,8 @@ export default class VThree
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.BasicShadowMap;
         this.renderer.domElement.id = "main";
+        this.renderer.gammaInput = true;
+        this.renderer.gammaOutput = true;
         document.body.appendChild( this.renderer.domElement );
 
         this.updateCanvasAlpha();

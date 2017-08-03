@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 38);
+/******/ 	return __webpack_require__(__webpack_require__.s = 39);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -9892,8 +9892,8 @@ return jQuery;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(37);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__GUIParameters__ = __webpack_require__(38);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui__ = __webpack_require__(33);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_dat_gui___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_dat_gui__);
 
 
@@ -10703,18 +10703,62 @@ var Scene05 = (function () {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         // カメラ位置を設定
         this.camera.position.z = 0;
-        // this.composer = new THREE.EffectComposer( this.renderer );
-        // this.composer.addPass( new THREE.RenderPass( this.scene, this.camera ) );
-        // var effect = new THREE.ShaderPass( THREE.DotScreenShader );
-        // effect.uniforms[ 'scale' ].value = 4;
-        // this.composer.addPass( effect );
-        // var effect = new THREE.ShaderPass( THREE.RGBShiftShader );
-        // effect.uniforms[ 'amount' ].value = 0.0015;
-        // effect.renderToScreen = true;
-        // this.composer.addPass( effect );
         this.image_noiseSeed = this.gui.parameters.image_noiseSeed;
         this.image_noiseScale = this.gui.parameters.image_noiseScale;
         this.image_noiseSpeed = this.gui.parameters.image_speed;
+        this.initPostProcessing();
+    };
+    Scene05.prototype.initPostProcessing = function () {
+        var shaderBleach = THREE.BleachBypassShader;
+        var shaderSepia = THREE.SepiaShader;
+        var shaderVignette = THREE.VignetteShader;
+        var shaderCopy = THREE.CopyShader;
+        var shaderBleach = THREE.BleachBypassShader;
+        var shaderSepia = THREE.SepiaShader;
+        var shaderVignette = THREE.VignetteShader;
+        var shaderCopy = THREE.CopyShader;
+        var effectBleach = new THREE.ShaderPass(shaderBleach);
+        var effectSepia = new THREE.ShaderPass(shaderSepia);
+        var effectVignette = new THREE.ShaderPass(shaderVignette);
+        var effectCopy = new THREE.ShaderPass(shaderCopy);
+        effectBleach.uniforms["opacity"].value = 0.05;
+        effectSepia.uniforms["amount"].value = 0.9;
+        effectVignette.uniforms["offset"].value = 0.95;
+        effectVignette.uniforms["darkness"].value = 1.6;
+        var effectBloom = new THREE.BloomPass(2.2);
+        var effectFilm = new THREE.FilmPass(0.35, 0.025, 1024, false);
+        var effectFilmBW = new THREE.FilmPass(0.35, 0.5, 2048, true);
+        effectVignette.renderToScreen = true;
+        effectBleach.renderToScreen = true;
+        var effectDotScreen = new THREE.DotScreenPass(new THREE.Vector2(0, 0), 0.5, 0.8);
+        effectFilm.renderToScreen = true;
+        effectFilmBW.renderToScreen = true;
+        var effectHBlur = new THREE.ShaderPass(THREE.HorizontalBlurShader);
+        var effectVBlur = new THREE.ShaderPass(THREE.VerticalBlurShader);
+        effectHBlur.uniforms['h'].value = 4 / (window.innerWidth / 2);
+        effectVBlur.uniforms['v'].value = 4 / (window.innerHeight / 2);
+        var effectColorify1 = new THREE.ShaderPass(THREE.ColorifyShader);
+        var effectColorify2 = new THREE.ShaderPass(THREE.ColorifyShader);
+        effectColorify1.uniforms['color'] = new THREE.Uniform(new THREE.Color(1, 0.8, 0.8));
+        effectColorify2.uniforms['color'] = new THREE.Uniform(new THREE.Color(1, 0.75, 0.5));
+        var clearMask = new THREE.ClearMaskPass();
+        var renderMask = new THREE.MaskPass(this.scene, this.camera);
+        var renderMaskInverse = new THREE.MaskPass(this.scene, this.camera);
+        renderMaskInverse.inverse = true;
+        this.composer = new THREE.EffectComposer(this.renderer);
+        this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
+        var renderScene = new THREE.TexturePass(this.composer.renderTarget2.texture);
+        var effectRGB = new THREE.ShaderPass(THREE.RGBShiftShader);
+        effectRGB.uniforms['amount'].value = 0.001;
+        effectRGB.renderToScreen = true;
+        this.composer.addPass(effectFilm);
+        this.composer.addPass(effectBleach);
+        this.composer.addPass(effectVignette);
+        this.composer.addPass(renderMaskInverse);
+        this.composer.addPass(effectHBlur);
+        this.composer.addPass(effectVBlur);
+        this.composer.addPass(clearMask);
+        this.isPostProcessing = true;
     };
     // ******************************************************
     Scene05.prototype.click = function () {
@@ -10792,6 +10836,7 @@ var Scene05 = (function () {
         this.plane.position.set(this.gui.parameters.image_positionX, this.gui.parameters.image_positionY, 
         //this.gui.parameters.image_positionZ,
         this.startPlaneZ);
+        this.composer.render();
     };
     return Scene05;
 }());
@@ -10805,9 +10850,9 @@ var Scene05 = (function () {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery__ = __webpack_require__(0);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_jquery___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_jquery__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(36);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__ = __webpack_require__(37);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1__node_modules_three_examples_js_controls_OrbitControls_js__);
-var Stats = __webpack_require__(35);
+var Stats = __webpack_require__(36);
 
 
 var VThree = (function () {
@@ -10951,6 +10996,8 @@ var VThree = (function () {
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.BasicShadowMap;
         this.renderer.domElement.id = "main";
+        this.renderer.gammaInput = true;
+        this.renderer.gammaOutput = true;
         document.body.appendChild(this.renderer.domElement);
         this.updateCanvasAlpha();
         this.stats = new Stats();
@@ -23317,6 +23364,68 @@ THREE.HorizontalBlurShader = {
 /***/ (function(module, exports) {
 
 /**
+ * @author felixturner / http://airtight.cc/
+ *
+ * RGB Shift Shader
+ * Shifts red and blue channels from center in opposite directions
+ * Ported from http://kriss.cx/tom/2009/05/rgb-shift/
+ * by Tom Butterworth / http://kriss.cx/tom/
+ *
+ * amount: shift distance (1 is width of input)
+ * angle: shift angle in radians
+ */
+
+THREE.RGBShiftShader = {
+
+	uniforms: {
+
+		"tDiffuse": { value: null },
+		"amount":   { value: 0.005 },
+		"angle":    { value: 0.0 }
+
+	},
+
+	vertexShader: [
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vUv = uv;",
+			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+
+		"}"
+
+	].join( "\n" ),
+
+	fragmentShader: [
+
+		"uniform sampler2D tDiffuse;",
+		"uniform float amount;",
+		"uniform float angle;",
+
+		"varying vec2 vUv;",
+
+		"void main() {",
+
+			"vec2 offset = amount * vec2( cos(angle), sin(angle));",
+			"vec4 cr = texture2D(tDiffuse, vUv + offset);",
+			"vec4 cga = texture2D(tDiffuse, vUv);",
+			"vec4 cb = texture2D(tDiffuse, vUv - offset);",
+			"gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);",
+
+		"}"
+
+	].join( "\n" )
+
+};
+
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports) {
+
+/**
  * @author alteredq / http://alteredqualia.com/
  *
  * Sepia tone shader
@@ -23373,7 +23482,7 @@ THREE.SepiaShader = {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports) {
 
 /**
@@ -23441,7 +23550,7 @@ THREE.VerticalBlurShader = {
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports) {
 
 /**
@@ -23510,14 +23619,14 @@ THREE.VignetteShader = {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(34)
-module.exports.color = __webpack_require__(33)
+module.exports = __webpack_require__(35)
+module.exports.color = __webpack_require__(34)
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 /**
@@ -24277,7 +24386,7 @@ dat.color.toString,
 dat.utils.common);
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports) {
 
 /**
@@ -27942,7 +28051,7 @@ dat.dom.dom,
 dat.utils.common);
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports) {
 
 // stats.js - http://github.com/mrdoob/stats.js
@@ -27954,7 +28063,7 @@ a+"px",m=b,r=0);return b},update:function(){l=this.end()}}};"object"===typeof mo
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports) {
 
 /**
@@ -28976,7 +29085,7 @@ Object.defineProperties( THREE.OrbitControls.prototype, {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -29030,7 +29139,7 @@ var GUIParameters = (function () {
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -29070,30 +29179,33 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_18__shaders_FilmShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_18__shaders_FilmShader_js__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__shaders_HorizontalBlurShader_js__ = __webpack_require__(28);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_19__shaders_HorizontalBlurShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_19__shaders_HorizontalBlurShader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__shaders_SepiaShader_js__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__shaders_SepiaShader_js__ = __webpack_require__(30);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_20__shaders_SepiaShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_20__shaders_SepiaShader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__shaders_VerticalBlurShader_js__ = __webpack_require__(30);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__shaders_VerticalBlurShader_js__ = __webpack_require__(31);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_21__shaders_VerticalBlurShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_21__shaders_VerticalBlurShader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__shaders_VignetteShader_js__ = __webpack_require__(31);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__shaders_VignetteShader_js__ = __webpack_require__(32);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_22__shaders_VignetteShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_22__shaders_VignetteShader_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__postprocessing_EffectComposer_js__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__postprocessing_EffectComposer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_23__postprocessing_EffectComposer_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_RenderPass_js__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_RenderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_24__postprocessing_RenderPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_BloomPass_js__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_BloomPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_25__postprocessing_BloomPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_FilmPass_js__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_FilmPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_26__postprocessing_FilmPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_DotScreenPass_js__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_DotScreenPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_27__postprocessing_DotScreenPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_TexturePass_js__ = __webpack_require__(20);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_TexturePass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_28__postprocessing_TexturePass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_ShaderPass_js__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_ShaderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_29__postprocessing_ShaderPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__postprocessing_MaskPass_js__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__postprocessing_MaskPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_30__postprocessing_MaskPass_js__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__postprocessing_GlitchPass_js__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__postprocessing_GlitchPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_31__postprocessing_GlitchPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__shaders_RGBShiftShader_js__ = __webpack_require__(29);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_23__shaders_RGBShiftShader_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_23__shaders_RGBShiftShader_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_EffectComposer_js__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_24__postprocessing_EffectComposer_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_24__postprocessing_EffectComposer_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_RenderPass_js__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_25__postprocessing_RenderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_25__postprocessing_RenderPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_BloomPass_js__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_26__postprocessing_BloomPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_26__postprocessing_BloomPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_FilmPass_js__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_27__postprocessing_FilmPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_27__postprocessing_FilmPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_DotScreenPass_js__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_28__postprocessing_DotScreenPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_28__postprocessing_DotScreenPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_TexturePass_js__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_29__postprocessing_TexturePass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_29__postprocessing_TexturePass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__postprocessing_ShaderPass_js__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_30__postprocessing_ShaderPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_30__postprocessing_ShaderPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__postprocessing_MaskPass_js__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_31__postprocessing_MaskPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_31__postprocessing_MaskPass_js__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_32__postprocessing_GlitchPass_js__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_32__postprocessing_GlitchPass_js___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_32__postprocessing_GlitchPass_js__);
+
 
 
 
